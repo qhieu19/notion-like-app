@@ -3,24 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Tasks</title>
+  <title>Task Board - Notion</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header>
     <div class="header-left">
-      <a href="index.html" class="back-link">‹</a>
-      <h1>Task Board</h1>
+      <a href="index.html" class="back-link">‹ Workspace</a>
+      <span style="color: var(--text-dim); font-size: 13px;">/</span>
+      <h1>📋 Task Board</h1>
     </div>
-    <button id="new-task-btn">+ New Task</button>
+    <button id="new-task-btn">+ New</button>
   </header>
 
   <main>
     <div class="toolbar">
-      <input type="text" id="search-tasks" placeholder="Search tasks…" autocomplete="off" autocorrect="off" spellcheck="false">
+      <input type="text" id="search-tasks" placeholder="Filter tasks..." autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
 
-    <div id="loading" class="loading" style="display: none;">Loading…</div>
+    <div id="loading" class="loading" style="display: none;">Loading...</div>
 
     <div id="task-board">
       <div class="column" data-column="backlog">
@@ -45,13 +46,13 @@
   <!-- Task Form Modal -->
   <div id="task-modal" class="modal">
     <div class="modal-content">
-      <h2>New Task</h2>
+      <h2>New task</h2>
       <form id="task-form">
         <label>Title
-          <input type="text" id="task-title" placeholder="Task title" required autocomplete="off">
+          <input type="text" id="task-title" placeholder="Untitled task" required autocomplete="off">
         </label>
         <label>Description
-          <textarea id="task-description" placeholder="Optional description…" rows="3"></textarea>
+          <textarea id="task-description" placeholder="Add details..." rows="3"></textarea>
         </label>
         <div class="form-row">
           <label>Priority
@@ -72,7 +73,7 @@
         </div>
         <div class="form-actions">
           <button type="button" id="cancel-task">Cancel</button>
-          <button type="submit">Save</button>
+          <button type="submit">Done</button>
         </div>
       </form>
     </div>

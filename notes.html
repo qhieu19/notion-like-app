@@ -3,44 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Notes</title>
+  <title>Notes - Notion</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header>
     <div class="header-left">
-      <a href="index.html" class="back-link">‹</a>
-      <h1>Notes</h1>
+      <a href="index.html" class="back-link">‹ Workspace</a>
+      <span style="color: var(--text-dim); font-size: 13px;">/</span>
+      <h1>📝 Notes</h1>
     </div>
-    <button id="new-note-btn">+ New Note</button>
+    <button id="new-note-btn">+ New</button>
   </header>
 
   <main>
     <div class="toolbar">
-      <input type="text" id="search-notes" placeholder="Search notes…" autocomplete="off" autocorrect="off" spellcheck="false">
+      <input type="text" id="search-notes" placeholder="Filter notes..." autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
 
-    <div id="loading" class="loading" style="display: none;">Loading…</div>
+    <div id="loading" class="loading" style="display: none;">Loading...</div>
 
     <section id="notes-list">
-      <p class="empty-state">No notes yet.<br>Tap <strong>+ New Note</strong> to start.</p>
+      <p class="empty-state">No notes yet. Click <strong>+ New</strong> to create one.</p>
     </section>
   </main>
 
   <!-- Note Form Modal -->
   <div id="note-modal" class="modal">
     <div class="modal-content">
-      <h2>New Note</h2>
+      <h2>New page</h2>
       <form id="note-form">
         <label>Title
-          <input type="text" id="note-title" placeholder="Note title" required autocomplete="off">
+          <input type="text" id="note-title" placeholder="Untitled" required autocomplete="off">
         </label>
         <label>Content
-          <textarea id="note-content" placeholder="Write something…" rows="6" required></textarea>
+          <textarea id="note-content" placeholder="Press enter to start typing..." rows="6" required></textarea>
         </label>
         <div class="form-actions">
           <button type="button" id="cancel-note">Cancel</button>
-          <button type="submit">Save</button>
+          <button type="submit">Done</button>
         </div>
       </form>
     </div>
