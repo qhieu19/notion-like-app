@@ -44,9 +44,20 @@ CREATE TABLE tasks (
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Create time_sessions table for SKAX Time Tracker
+CREATE TABLE time_sessions (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  date date NOT NULL,
+  check_in_time timestamp with time zone NOT NULL,
+  check_out_time timestamp with time zone NOT NULL,
+  duration_ms bigint NOT NULL,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE time_sessions ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (allow all operations for now - refine later with auth)
 CREATE POLICY "Enable all operations for notes" ON notes
@@ -55,9 +66,13 @@ CREATE POLICY "Enable all operations for notes" ON notes
 CREATE POLICY "Enable all operations for tasks" ON tasks
   FOR ALL USING (true) WITH CHECK (true);
 
+CREATE POLICY "Enable all operations for time_sessions" ON time_sessions
+  FOR ALL USING (true) WITH CHECK (true);
+
 -- Create indexes for better performance
 CREATE INDEX notes_created_at_idx ON notes(created_at DESC);
 CREATE INDEX tasks_created_at_idx ON tasks(created_at DESC);
+CREATE INDEX time_sessions_date_idx ON time_sessions(date DESC);
 CREATE INDEX tasks_column_idx ON tasks(task_column);
 ```
 

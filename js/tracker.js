@@ -1,10 +1,9 @@
-// js/tracker.js - High-performance lightweight time tracker
-import { showToast } from './main.js';
+// js/tracker.js - SKAX Time Tracker with Supabase sync
+import { initSupabase, showToast } from './main.js';
 
 const STORAGE_KEY_CURRENT = 'skax_tracker_active_session';
-const STORAGE_KEY_HISTORY = 'skax_tracker_history';
-
-let currentView = 'today'; // 'today' or 'month'
+let currentView = 'today';
+let supabase = null;
 
 // Helper: Format milliseconds into HH:MM:SS
 function formatDuration(ms) {
@@ -17,14 +16,12 @@ function formatDuration(ms) {
     .join(':');
 }
 
-// Helper: Format timestamp to 12h or 24h readable time
 function formatTime(isoString) {
   if (!isoString) return '';
   const d = new Date(isoString);
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-// Helper: Format timestamp to HH:MM for time input value
 function formatTimeInput(isoString) {
   if (!isoString) return '';
   const d = new Date(isoString);
@@ -38,7 +35,6 @@ function getTodayDateString() {
   return now.toISOString().split('T')[0];
 }
 
-// Get active session
 function getActiveSession() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_CURRENT);
@@ -48,52 +44,91 @@ function getActiveSession() {
   }
 }
 
-// Get history array
-function getHistory() {
+async function getHistory() {
+  if (!supabase) return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_HISTORY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
+    const { data, error } = await supabase
+      .from('time_sessions')
+      .select('*')
+      .order('date', { ascending: false })
+      .order('check_in_time', { ascending: false });
+
+    if (error) throw error;
+
+    return data.map(row => ({
+      id: row.id,
+      date: row.date,
+      checkInTime: row.check_in_time,
+      checkOutTime: row.check_out_time,
+      durationMs: row.duration_ms
+    }));
+  } catch (err) {
+    console.error('Failed to load history', err);
     return [];
   }
 }
 
-function saveHistory(list) {
+async function saveSession(session) {
+  if (!supabase) return;
   try {
-    localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(list));
+    const { error } = await supabase
+      .from('time_sessions')
+      .insert({
+        date: session.date,
+        check_in_time: session.checkInTime,
+        check_out_time: session.checkOutTime,
+        duration_ms: session.durationMs
+      });
+
+    if (error) throw error;
   } catch (err) {
-    console.error('Failed to save history', err);
+    console.error('Failed to save session', err);
+    showToast('Failed to save session', 'error');
   }
 }
 
-// Check day rollover: If session is from a previous day, auto close it at midnight or archive
-function handleDayRollover(session) {
+async function updateSession(id, session) {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase
+      .from('time_sessions')
+      .update({
+        check_in_time: session.checkInTime,
+        check_out_time: session.checkOutTime,
+        duration_ms: session.durationMs
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+  } catch (err) {
+    console.error('Failed to update session', err);
+    showToast('Failed to update session', 'error');
+  }
+}
+
+async function handleDayRollover(session) {
   if (!session) return null;
   const sessionDate = session.checkInTime.split('T')[0];
   const today = getTodayDateString();
 
   if (sessionDate !== today) {
-    // Session is from a past day: close it out to past history
     const checkOut = session.checkOutTime || new Date(sessionDate + 'T23:59:59').toISOString();
     const durationMs = Math.max(0, new Date(checkOut) - new Date(session.checkInTime));
 
-    const history = getHistory();
-    history.unshift({
+    await saveSession({
       date: sessionDate,
       checkInTime: session.checkInTime,
       checkOutTime: checkOut,
       durationMs
     });
-    saveHistory(history);
     localStorage.removeItem(STORAGE_KEY_CURRENT);
     return null;
   }
   return session;
 }
 
-// Update UI elements
-function updateDisplay() {
-  let session = handleDayRollover(getActiveSession());
+async function updateDisplay() {
+  let session = await handleDayRollover(getActiveSession());
 
   const timerEl = document.getElementById('timer-display');
   const statusEl = document.getElementById('session-status');
@@ -101,18 +136,17 @@ function updateDisplay() {
   const btnCheckIn = document.getElementById('btn-checkin');
   const btnCheckOut = document.getElementById('btn-checkout');
 
-  const todaySessions = getHistory().filter(h => h.date === getTodayDateString());
+  const history = await getHistory();
+  const todaySessions = history.filter(h => h.date === getTodayDateString());
   const todayTotal = todaySessions.reduce((sum, s) => sum + (s.durationMs || 0), 0);
   timerEl.textContent = formatDuration(todayTotal);
 
   if (session && !session.checkOutTime) {
-    // Currently checked in
     statusEl.classList.add('active');
     statusText.textContent = 'Working now';
     btnCheckIn.disabled = true;
     btnCheckOut.disabled = false;
   } else {
-    // Checked out or idle
     statusEl.classList.remove('active');
     btnCheckIn.disabled = false;
     btnCheckOut.disabled = true;
@@ -124,21 +158,22 @@ function updateDisplay() {
     }
   }
 
-  renderHistory();
+  await renderHistory();
 }
 
-function renderHistory() {
+async function renderHistory() {
   if (currentView === 'today') {
-    renderTodayView();
+    await renderTodayView();
   } else {
-    renderMonthView();
+    await renderMonthView();
   }
 }
 
-function renderTodayView() {
+async function renderTodayView() {
   const container = document.getElementById('history-list');
   const countEl = document.getElementById('total-days-count');
-  const todaySessions = getHistory().filter(h => h.date === getTodayDateString());
+  const history = await getHistory();
+  const todaySessions = history.filter(h => h.date === getTodayDateString());
 
   if (countEl) {
     const totalMs = todaySessions.reduce((sum, s) => sum + (s.durationMs || 0), 0);
@@ -158,7 +193,7 @@ function renderTodayView() {
         <div class="history-date">Session ${i + 1}</div>
         <div class="history-times" id="times-${i}">${formatTime(s.checkInTime)} – ${formatTime(s.checkOutTime)}</div>
         <div id="edit-form-${i}" style="display: none; margin-top: 8px; gap: 8px;">
-          <input type="time" id="edit-in-${i}" value="${formatTimeInput(s.checkInTime)}" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; background: var(--bg); color: var(--text);">
+          <input type="time" id="edit-in-${i}" value="${formatTimeInput(s.checkInTime)}" data-session-id="${s.id}" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; background: var(--bg); color: var(--text);">
           <span style="color: var(--text-muted);">–</span>
           <input type="time" id="edit-out-${i}" value="${formatTimeInput(s.checkOutTime)}" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; background: var(--bg); color: var(--text);">
           <button class="btn-save-session" data-index="${i}" style="padding: 4px 12px; background: var(--primary); color: #fff; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">Save</button>
@@ -172,7 +207,6 @@ function renderTodayView() {
     </div>
   `).join('');
 
-  // Attach edit handlers
   container.querySelectorAll('.btn-edit-session').forEach(btn => {
     btn.addEventListener('click', () => showEditForm(parseInt(btn.dataset.index)));
   });
@@ -186,17 +220,15 @@ function renderTodayView() {
   });
 }
 
-function renderMonthView() {
+async function renderMonthView() {
   const container = document.getElementById('history-list');
   const countEl = document.getElementById('total-days-count');
-  const history = getHistory();
+  const history = await getHistory();
 
-  // Filter to current month
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const thisMonthHistory = history.filter(h => h.date.startsWith(currentMonth));
 
-  // Group by date and sum
   const byDate = {};
   for (const item of thisMonthHistory) {
     if (!byDate[item.date]) {
@@ -232,81 +264,6 @@ function renderMonthView() {
   }).join('');
 }
 
-// Handlers
-function handleCheckIn() {
-  const btnIn = document.getElementById('btn-checkin');
-  btnIn.textContent = 'Wait...';
-  btnIn.disabled = true;
-
-  const today = getTodayDateString();
-  const now = new Date().toISOString();
-
-  const newSession = {
-    date: today,
-    checkInTime: now,
-    checkOutTime: null
-  };
-
-  localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(newSession));
-  showToast('Checked in successfully! Timer started.', 'success');
-  updateDisplay();
-}
-
-function handleCheckOut() {
-  const session = getActiveSession();
-  if (!session || session.checkOutTime) return;
-
-  const btnOut = document.getElementById('btn-checkout');
-  btnOut.textContent = 'Wait...';
-  btnOut.disabled = true;
-
-  const checkOutTime = new Date().toISOString();
-  session.checkOutTime = checkOutTime;
-  const durationMs = Math.max(0, new Date(checkOutTime) - new Date(session.checkInTime));
-  session.durationMs = durationMs;
-
-  // Save to history — always append new session interval
-  const history = getHistory();
-  history.unshift({ date: session.date, checkInTime: session.checkInTime, checkOutTime: session.checkOutTime, durationMs });
-
-  saveHistory(history);
-  localStorage.removeItem(STORAGE_KEY_CURRENT); // clear so next check-in starts fresh interval
-
-  showToast(`Checked out! Worked for ${formatDuration(durationMs)}`, 'info');
-  updateDisplay();
-}
-
-// Init
-document.addEventListener('DOMContentLoaded', () => {
-  const btnIn = document.getElementById('btn-checkin');
-  const btnOut = document.getElementById('btn-checkout');
-  const tabToday = document.getElementById('tab-today');
-  const tabMonth = document.getElementById('tab-month');
-
-  if (btnIn) btnIn.addEventListener('click', handleCheckIn);
-  if (btnOut) btnOut.addEventListener('click', handleCheckOut);
-
-  if (tabToday) {
-    tabToday.addEventListener('click', () => {
-      currentView = 'today';
-      tabToday.classList.add('active');
-      tabMonth.classList.remove('active');
-      renderHistory();
-    });
-  }
-
-  if (tabMonth) {
-    tabMonth.addEventListener('click', () => {
-      currentView = 'month';
-      tabMonth.classList.add('active');
-      tabToday.classList.remove('active');
-      renderHistory();
-    });
-  }
-
-  updateDisplay();
-});
-
 function showEditForm(index) {
   const timesEl = document.getElementById(`times-${index}`);
   const formEl = document.getElementById(`edit-form-${index}`);
@@ -321,8 +278,9 @@ function hideEditForm(index) {
   if (formEl) formEl.style.display = 'none';
 }
 
-function handleSaveSession(index, btn) {
-  const todaySessions = getHistory().filter(h => h.date === getTodayDateString());
+async function handleSaveSession(index, btn) {
+  const history = await getHistory();
+  const todaySessions = history.filter(h => h.date === getTodayDateString());
   const session = todaySessions[index];
   if (!session) return;
 
@@ -330,7 +288,6 @@ function handleSaveSession(index, btn) {
   const outVal = document.getElementById(`edit-out-${index}`).value;
   if (!inVal || !outVal) return;
 
-  // Show loading state
   const origText = btn.textContent;
   btn.textContent = 'Wait...';
   btn.disabled = true;
@@ -340,13 +297,81 @@ function handleSaveSession(index, btn) {
   const checkOutTime = new Date(`${date}T${outVal}:00`).toISOString();
   const durationMs = Math.max(0, new Date(checkOutTime) - new Date(checkInTime));
 
-  // Find in full history and update
-  const history = getHistory();
-  const fullIndex = history.findIndex(h => h.date === session.date && h.checkInTime === session.checkInTime);
-  if (fullIndex >= 0) {
-    history[fullIndex] = { date, checkInTime, checkOutTime, durationMs };
-    saveHistory(history);
-    showToast('Session updated', 'success');
-    updateDisplay();
-  }
+  await updateSession(session.id, { checkInTime, checkOutTime, durationMs });
+  showToast('Session updated', 'success');
+  await updateDisplay();
 }
+
+async function handleCheckIn() {
+  const btnIn = document.getElementById('btn-checkin');
+  btnIn.textContent = 'Wait...';
+  btnIn.disabled = true;
+
+  const today = getTodayDateString();
+  const now = new Date().toISOString();
+
+  const newSession = {
+    date: today,
+    checkInTime: now,
+    checkOutTime: null
+  };
+
+  localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(newSession));
+  showToast('Checked in successfully!', 'success');
+  await updateDisplay();
+}
+
+async function handleCheckOut() {
+  const session = getActiveSession();
+  if (!session || session.checkOutTime) return;
+
+  const btnOut = document.getElementById('btn-checkout');
+  btnOut.textContent = 'Wait...';
+  btnOut.disabled = true;
+
+  const checkOutTime = new Date().toISOString();
+  const durationMs = Math.max(0, new Date(checkOutTime) - new Date(session.checkInTime));
+
+  await saveSession({
+    date: session.date,
+    checkInTime: session.checkInTime,
+    checkOutTime: checkOutTime,
+    durationMs
+  });
+
+  localStorage.removeItem(STORAGE_KEY_CURRENT);
+  showToast(`Checked out! Worked for ${formatDuration(durationMs)}`, 'info');
+  await updateDisplay();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  supabase = await initSupabase();
+
+  const btnIn = document.getElementById('btn-checkin');
+  const btnOut = document.getElementById('btn-checkout');
+  const tabToday = document.getElementById('tab-today');
+  const tabMonth = document.getElementById('tab-month');
+
+  if (btnIn) btnIn.addEventListener('click', handleCheckIn);
+  if (btnOut) btnOut.addEventListener('click', handleCheckOut);
+
+  if (tabToday) {
+    tabToday.addEventListener('click', async () => {
+      currentView = 'today';
+      tabToday.classList.add('active');
+      tabMonth.classList.remove('active');
+      await renderHistory();
+    });
+  }
+
+  if (tabMonth) {
+    tabMonth.addEventListener('click', async () => {
+      currentView = 'month';
+      tabMonth.classList.add('active');
+      tabToday.classList.remove('active');
+      await renderHistory();
+    });
+  }
+
+  await updateDisplay();
+});
