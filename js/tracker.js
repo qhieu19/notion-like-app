@@ -123,11 +123,13 @@ function updateDisplay() {
     btnCheckIn.disabled = false;
     btnCheckOut.disabled = true;
 
-    if (session && session.checkOutTime) {
-      const duration = new Date(session.checkOutTime) - new Date(session.checkInTime);
-      timerEl.textContent = formatDuration(duration);
-      statusText.textContent = 'Session Completed Today';
-      startInfo.textContent = `From ${formatTime(session.checkInTime)} to ${formatTime(session.checkOutTime)}`;
+    const todaySessions = getHistory().filter(h => h.date === getTodayDateString());
+    if (todaySessions.length > 0) {
+      const todayTotal = todaySessions.reduce((sum, s) => sum + (s.durationMs || 0), 0);
+      const last = todaySessions[0];
+      timerEl.textContent = formatDuration(todayTotal);
+      statusText.textContent = `${todaySessions.length} session${todaySessions.length > 1 ? 's' : ''} today`;
+      startInfo.textContent = `Last: ${formatTime(last.checkInTime)} – ${formatTime(last.checkOutTime)}`;
     } else {
       timerEl.textContent = '00:00:00';
       statusText.textContent = 'Ready to Check-in';
@@ -143,26 +145,49 @@ function renderHistory() {
   const countEl = document.getElementById('total-days-count');
   const history = getHistory();
 
+  // Group sessions by date
+  const byDate = {};
+  for (const item of history) {
+    if (!byDate[item.date]) byDate[item.date] = [];
+    byDate[item.date].push(item);
+  }
+  const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
+
   if (countEl) {
-    countEl.textContent = `${history.length} day${history.length === 1 ? '' : 's'} logged`;
+    countEl.textContent = `${dates.length} day${dates.length === 1 ? '' : 's'} logged`;
   }
 
   if (!container) return;
 
-  if (history.length === 0) {
+  if (dates.length === 0) {
     container.innerHTML = '<p class="empty-state">No time logs yet. Press Check-in to start your first session.</p>';
     return;
   }
 
-  container.innerHTML = history.map(item => `
-    <div class="history-item">
-      <div>
-        <div class="history-date">${item.date}</div>
-        <div class="history-times">${formatTime(item.checkInTime)} - ${formatTime(item.checkOutTime)}</div>
+  container.innerHTML = dates.map(date => {
+    const sessions = byDate[date];
+    const totalMs = sessions.reduce((sum, s) => sum + (s.durationMs || 0), 0);
+    const rows = sessions.map((s, i) => `
+      <div class="history-item" style="padding-left:12px; border-left: 2px solid var(--border); margin-top:6px;">
+        <div>
+          <div class="history-times" style="font-size:12px;">Session ${i + 1}: ${formatTime(s.checkInTime)} – ${formatTime(s.checkOutTime)}</div>
+        </div>
+        <div class="history-duration" style="font-size:12px;">${formatDuration(s.durationMs)}</div>
       </div>
-      <div class="history-duration">${formatDuration(item.durationMs)}</div>
-    </div>
-  `).join('');
+    `).join('');
+    return `
+      <div style="margin-bottom:12px;">
+        <div class="history-item">
+          <div>
+            <div class="history-date">${date}</div>
+            <div class="history-times" style="font-size:11px; margin-top:2px;">${sessions.length} session${sessions.length > 1 ? 's' : ''}</div>
+          </div>
+          <div class="history-duration">${formatDuration(totalMs)}</div>
+        </div>
+        ${rows}
+      </div>
+    `;
+  }).join('');
 }
 
 // Handlers
@@ -190,18 +215,12 @@ function handleCheckOut() {
   const durationMs = Math.max(0, new Date(checkOutTime) - new Date(session.checkInTime));
   session.durationMs = durationMs;
 
-  // Save to history
+  // Save to history — always append new session interval
   const history = getHistory();
-  // If already logged today, replace or prepend
-  const existingIdx = history.findIndex(h => h.date === session.date);
-  if (existingIdx >= 0) {
-    history[existingIdx] = session;
-  } else {
-    history.unshift(session);
-  }
+  history.unshift({ date: session.date, checkInTime: session.checkInTime, checkOutTime: session.checkOutTime, durationMs });
 
   saveHistory(history);
-  localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(session));
+  localStorage.removeItem(STORAGE_KEY_CURRENT); // clear so next check-in starts fresh interval
 
   showToast(`Checked out! Worked for ${formatDuration(durationMs)}`, 'info');
   updateDisplay();

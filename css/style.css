@@ -684,6 +684,8 @@ main {
 }
 
 .banner-header {
+  height: auto;
+  position: static;
   padding: 24px 0 16px;
   border-bottom: 1px solid var(--border);
   display: flex;
