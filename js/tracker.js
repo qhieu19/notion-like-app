@@ -4,6 +4,8 @@ import { showToast } from './main.js';
 const STORAGE_KEY_CURRENT = 'skax_tracker_active_session';
 const STORAGE_KEY_HISTORY = 'skax_tracker_history';
 
+let currentView = 'today'; // 'today' or 'month'
+
 // Helper: Format milliseconds into HH:MM:SS
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -117,20 +119,67 @@ function updateDisplay() {
 }
 
 function renderHistory() {
+  if (currentView === 'today') {
+    renderTodayView();
+  } else {
+    renderMonthView();
+  }
+}
+
+function renderTodayView() {
+  const container = document.getElementById('history-list');
+  const countEl = document.getElementById('total-days-count');
+  const todaySessions = getHistory().filter(h => h.date === getTodayDateString());
+
+  if (countEl) {
+    const totalMs = todaySessions.reduce((sum, s) => sum + (s.durationMs || 0), 0);
+    countEl.textContent = `${todaySessions.length} session${todaySessions.length > 1 ? 's' : ''} · ${formatDuration(totalMs)}`;
+  }
+
+  if (!container) return;
+
+  if (todaySessions.length === 0) {
+    container.innerHTML = '<p class="empty-state">No sessions today. Press Check-in to start.</p>';
+    return;
+  }
+
+  container.innerHTML = todaySessions.map((s, i) => `
+    <div class="history-item">
+      <div>
+        <div class="history-date">Session ${i + 1}</div>
+        <div class="history-times">${formatTime(s.checkInTime)} – ${formatTime(s.checkOutTime)}</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="history-duration">${formatDuration(s.durationMs)}</div>
+        <button class="btn-edit-session" data-index="${i}" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:4px;">✎</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Attach edit handlers
+  container.querySelectorAll('.btn-edit-session').forEach(btn => {
+    btn.addEventListener('click', () => handleEditSession(parseInt(btn.dataset.index)));
+  });
+}
+
+function renderMonthView() {
   const container = document.getElementById('history-list');
   const countEl = document.getElementById('total-days-count');
   const history = getHistory();
 
-  // Filter to current month only (YYYY-MM)
+  // Filter to current month
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const thisMonthHistory = history.filter(h => h.date.startsWith(currentMonth));
 
-  // Group sessions by date
+  // Group by date and sum
   const byDate = {};
   for (const item of thisMonthHistory) {
-    if (!byDate[item.date]) byDate[item.date] = [];
-    byDate[item.date].push(item);
+    if (!byDate[item.date]) {
+      byDate[item.date] = { count: 0, totalMs: 0 };
+    }
+    byDate[item.date].count++;
+    byDate[item.date].totalMs += item.durationMs || 0;
   }
   const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
 
@@ -141,31 +190,19 @@ function renderHistory() {
   if (!container) return;
 
   if (dates.length === 0) {
-    container.innerHTML = '<p class="empty-state">No time logs this month. Press Check-in to start.</p>';
+    container.innerHTML = '<p class="empty-state">No time logs this month.</p>';
     return;
   }
 
   container.innerHTML = dates.map(date => {
-    const sessions = byDate[date];
-    const totalMs = sessions.reduce((sum, s) => sum + (s.durationMs || 0), 0);
-    const rows = sessions.map((s, i) => `
-      <div class="history-item" style="padding-left:12px; border-left: 2px solid var(--border); margin-top:6px;">
-        <div>
-          <div class="history-times" style="font-size:12px;">Session ${i + 1}: ${formatTime(s.checkInTime)} – ${formatTime(s.checkOutTime)}</div>
-        </div>
-        <div class="history-duration" style="font-size:12px;">${formatDuration(s.durationMs)}</div>
-      </div>
-    `).join('');
+    const { count, totalMs } = byDate[date];
     return `
-      <div style="margin-bottom:12px;">
-        <div class="history-item">
-          <div>
-            <div class="history-date">${date}</div>
-            <div class="history-times" style="font-size:11px; margin-top:2px;">${sessions.length} session${sessions.length > 1 ? 's' : ''}</div>
-          </div>
-          <div class="history-duration">${formatDuration(totalMs)}</div>
+      <div class="history-item">
+        <div>
+          <div class="history-date">${date}</div>
+          <div class="history-times">${count} session${count > 1 ? 's' : ''}</div>
         </div>
-        ${rows}
+        <div class="history-duration">${formatDuration(totalMs)}</div>
       </div>
     `;
   }).join('');
@@ -211,9 +248,60 @@ function handleCheckOut() {
 document.addEventListener('DOMContentLoaded', () => {
   const btnIn = document.getElementById('btn-checkin');
   const btnOut = document.getElementById('btn-checkout');
+  const tabToday = document.getElementById('tab-today');
+  const tabMonth = document.getElementById('tab-month');
 
   if (btnIn) btnIn.addEventListener('click', handleCheckIn);
   if (btnOut) btnOut.addEventListener('click', handleCheckOut);
 
+  if (tabToday) {
+    tabToday.addEventListener('click', () => {
+      currentView = 'today';
+      tabToday.classList.add('active');
+      tabMonth.classList.remove('active');
+      renderHistory();
+    });
+  }
+
+  if (tabMonth) {
+    tabMonth.addEventListener('click', () => {
+      currentView = 'month';
+      tabMonth.classList.add('active');
+      tabToday.classList.remove('active');
+      renderHistory();
+    });
+  }
+
   updateDisplay();
 });
+
+function handleEditSession(index) {
+  const todaySessions = getHistory().filter(h => h.date === getTodayDateString());
+  const session = todaySessions[index];
+  if (!session) return;
+
+  const newCheckIn = prompt('Check-in time (HH:MM 24h format):', formatTime(session.checkInTime));
+  if (!newCheckIn) return;
+
+  const newCheckOut = prompt('Check-out time (HH:MM 24h format):', formatTime(session.checkOutTime));
+  if (!newCheckOut) return;
+
+  // Parse and rebuild ISO timestamps
+  const date = session.date;
+  const [inH, inM] = newCheckIn.split(':').map(n => parseInt(n, 10));
+  const [outH, outM] = newCheckOut.split(':').map(n => parseInt(n, 10));
+
+  const checkInTime = new Date(`${date}T${String(inH).padStart(2, '0')}:${String(inM).padStart(2, '0')}:00`).toISOString();
+  const checkOutTime = new Date(`${date}T${String(outH).padStart(2, '0')}:${String(outM).padStart(2, '0')}:00`).toISOString();
+  const durationMs = Math.max(0, new Date(checkOutTime) - new Date(checkInTime));
+
+  // Find in full history and update
+  const history = getHistory();
+  const fullIndex = history.findIndex(h => h.date === session.date && h.checkInTime === session.checkInTime);
+  if (fullIndex >= 0) {
+    history[fullIndex] = { date, checkInTime, checkOutTime, durationMs };
+    saveHistory(history);
+    showToast('Session updated', 'success');
+    updateDisplay();
+  }
+}

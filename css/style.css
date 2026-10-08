@@ -987,6 +987,26 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+.history-tab {
+  background: transparent;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.history-tab:hover {
+  background: var(--hover-bg);
+  color: var(--text);
+}
+.history-tab.active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
 /* ── Toast Notifications ── */
 .toast {
   position: fixed;
