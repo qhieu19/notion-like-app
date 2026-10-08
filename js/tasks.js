@@ -57,7 +57,7 @@ function renderBoard() {
     : tasks;
 
   columns.forEach(col => {
-    const columnTasks = filteredTasks.filter(t => t.column === col);
+    const columnTasks = filteredTasks.filter(t => t.task_column === col);
     const column = document.querySelector(`.column[data-column="${col}"]`);
     const header = column.querySelector('.count');
     const body = column.querySelector('.column-body');
