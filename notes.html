@@ -8,11 +8,20 @@
 </head>
 <body>
   <header>
-    <h1>My Notes</h1>
+    <div class="header-left">
+      <a href="index.html" class="back-link">← Home</a>
+      <h1>My Notes</h1>
+    </div>
     <button id="new-note-btn">+ New Note</button>
   </header>
 
   <main>
+    <div class="toolbar">
+      <input type="text" id="search-notes" placeholder="Search notes...">
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">Loading...</div>
+
     <section id="notes-list">
       <!-- Notes will be inserted here -->
       <p class="empty-state">No notes yet. Click "+ New Note" to create one.</p>
@@ -34,7 +43,31 @@
     </div>
   </div>
 
+  <!-- Note Detail Modal -->
+  <div id="note-detail-modal" class="modal">
+    <div class="modal-content modal-detail">
+      <div class="detail-header">
+        <h2 class="detail-title"></h2>
+        <button class="close-detail" onclick="this.closest('.modal').style.display='none'">✕</button>
+      </div>
+      <div class="detail-content"></div>
+      <div class="detail-footer">
+        <small class="detail-date"></small>
+        <div class="detail-actions">
+          <button class="btn-secondary" onclick="document.getElementById('note-detail-modal').style.display='none'; editNote(this.closest('.modal').dataset.noteId);">Edit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="js/main.js"></script>
   <script type="module" src="js/notes.js"></script>
+  <script>
+    // Make editNote available globally for the detail modal
+    window.editNote = function(id) {
+      const event = new CustomEvent('editNote', { detail: { id } });
+      document.dispatchEvent(event);
+    };
+  </script>
 </body>
 </html>

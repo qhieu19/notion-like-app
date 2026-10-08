@@ -8,11 +8,20 @@
 </head>
 <body>
   <header>
-    <h1>Task Board</h1>
+    <div class="header-left">
+      <a href="index.html" class="back-link">← Home</a>
+      <h1>Task Board</h1>
+    </div>
     <button id="new-task-btn">+ New Task</button>
   </header>
 
   <main>
+    <div class="toolbar">
+      <input type="text" id="search-tasks" placeholder="Search tasks...">
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">Loading...</div>
+
     <div id="task-board">
       <!-- Kanban columns will be inserted here -->
       <div class="column" data-column="backlog">

@@ -1,6 +1,15 @@
 {
-  "buildCommand": "echo \"Static site, no build needed\"",
+  "buildCommand": "echo \"Static site - no build needed\"",
   "outputDirectory": ".",
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" }
+      ]
+    }
+  ]
 }
