@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes - Personal Notion-like App</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>My Notes</h1>
+    <button id="new-note-btn">+ New Note</button>
+  </header>
+
+  <main>
+    <section id="notes-list">
+      <!-- Notes will be inserted here -->
+      <p class="empty-state">No notes yet. Click "+ New Note" to create one.</p>
+    </section>
+  </main>
+
+  <!-- Note Form Modal -->
+  <div id="note-modal" class="modal">
+    <div class="modal-content">
+      <h2>New Note</h2>
+      <form id="note-form">
+        <input type="text" id="note-title" placeholder="Note title" required>
+        <textarea id="note-content" placeholder="Write something..." rows="6" required></textarea>
+        <div class="form-actions">
+          <button type="button" id="cancel-note">Cancel</button>
+          <button type="submit">Save Note</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/notes.js"></script>
+</body>
+</html>

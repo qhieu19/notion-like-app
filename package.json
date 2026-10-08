@@ -1,0 +1,16 @@
+{
+  "name": "untitled-folder-2",
+  "version": "1.0.0",
+  "description": "A simple task tracking and notes system built with HTML/CSS/JS and Supabase, designed to run on Vercel.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.64.0"
+  }
+}

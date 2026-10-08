@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Notion-like App</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>Personal Notion-like App</h1>
+    <div>
+      <button id="demo-toggle">Demo Mode: ON</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="home-container">
+      <h2>Choose what you want to do:</h2>
+      <div class="home-options">
+        <a href="notes.html" class="home-card">
+          <h3>📝 Notes</h3>
+          <p>Create, read, and organize your notes</p>
+        </a>
+        <a href="tasks.html" class="home-card">
+          <h3>✅ Tasks</h3>
+          <p>Manage your tasks with a Kanban board</p>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="js/main.js"></script>
+  <script type="module">
+    // Handle demo toggle
+    const demoToggle = document.getElementById('demo-toggle');
+    function updateDemoToggle() {
+      const isDemo = localStorage.getItem('demo-mode') !== 'false';
+      demoToggle.textContent = `Demo Mode: ${isDemo ? 'ON' : 'OFF'}`;
+      demoToggle.style.background = isDemo ? '#10b981' : '#ef4444';
+    }
+    demoToggle.addEventListener('click', () => {
+      const newDemo = localStorage.getItem('demo-mode') !== 'false';
+      localStorage.setItem('demo-mode', !newDemo);
+      updateDemoToggle();
+      // Reload current page to apply demo mode change
+      // In a real app, we might not reload, but for simplicity we do
+      if (window.location.pathname.endsWith('.html')) {
+        window.location.reload();
+      }
+    });
+    // Initialize
+    updateDemoToggle();
+  </script>
+</body>
+</html>

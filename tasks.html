@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasks - Personal Notion-like App</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>Task Board</h1>
+    <button id="new-task-btn">+ New Task</button>
+  </header>
+
+  <main>
+    <div id="task-board">
+      <!-- Kanban columns will be inserted here -->
+      <div class="column" data-column="backlog">
+        <div class="column-header"><h2>Backlog</h2><span class="count">0</span></div>
+        <div class="column-body"></div>
+      </div>
+      <div class="column" data-column="todo">
+        <div class="column-header"><h2>To Do</h2><span class="count">0</span></div>
+        <div class="column-body"></div>
+      </div>
+      <div class="column" data-column="in-progress">
+        <div class="column-header"><h2>In Progress</h2><span class="count">0</span></div>
+        <div class="column-body"></div>
+      </div>
+      <div class="column" data-column="done">
+        <div class="column-header"><h2>Done</h2><span class="count">0</span></div>
+        <div class="column-body"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Task Form Modal -->
+  <div id="task-modal" class="modal">
+    <div class="modal-content">
+      <h2>New Task</h2>
+      <form id="task-form">
+        <input type="text" id="task-title" placeholder="Task title" required>
+        <textarea id="task-description" placeholder="Description (optional)" rows="4"></textarea>
+        <div class="form-row">
+          <label>Priority:
+            <select id="task-priority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+          <label>Column:
+            <select id="task-column">
+              <option value="backlog">Backlog</option>
+              <option value="todo" selected>To Do</option>
+              <option value="in-progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="cancel-task">Cancel</button>
+          <button type="submit">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/tasks.js"></script>
+</body>
+</html>
