@@ -24,6 +24,15 @@ function formatTime(isoString) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+// Helper: Format timestamp to HH:MM for time input value
+function formatTimeInput(isoString) {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+}
+
 function getTodayDateString() {
   const now = new Date();
   return now.toISOString().split('T')[0];
@@ -144,10 +153,17 @@ function renderTodayView() {
   }
 
   container.innerHTML = todaySessions.map((s, i) => `
-    <div class="history-item">
-      <div>
+    <div class="history-item" id="session-${i}">
+      <div style="flex: 1;">
         <div class="history-date">Session ${i + 1}</div>
-        <div class="history-times">${formatTime(s.checkInTime)} – ${formatTime(s.checkOutTime)}</div>
+        <div class="history-times" id="times-${i}">${formatTime(s.checkInTime)} – ${formatTime(s.checkOutTime)}</div>
+        <div id="edit-form-${i}" style="display: none; margin-top: 8px; gap: 8px;">
+          <input type="time" id="edit-in-${i}" value="${formatTimeInput(s.checkInTime)}" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; background: var(--bg); color: var(--text);">
+          <span style="color: var(--text-muted);">–</span>
+          <input type="time" id="edit-out-${i}" value="${formatTimeInput(s.checkOutTime)}" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; background: var(--bg); color: var(--text);">
+          <button class="btn-save-session" data-index="${i}" style="padding: 4px 12px; background: var(--primary); color: #fff; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">Save</button>
+          <button class="btn-cancel-edit" data-index="${i}" style="padding: 4px 12px; background: transparent; color: var(--text-muted); border: 1px solid var(--border); border-radius: 4px; font-size: 12px; cursor: pointer;">Cancel</button>
+        </div>
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
         <div class="history-duration">${formatDuration(s.durationMs)}</div>
@@ -158,7 +174,15 @@ function renderTodayView() {
 
   // Attach edit handlers
   container.querySelectorAll('.btn-edit-session').forEach(btn => {
-    btn.addEventListener('click', () => handleEditSession(parseInt(btn.dataset.index)));
+    btn.addEventListener('click', () => showEditForm(parseInt(btn.dataset.index)));
+  });
+
+  container.querySelectorAll('.btn-save-session').forEach(btn => {
+    btn.addEventListener('click', () => handleSaveSession(parseInt(btn.dataset.index), btn));
+  });
+
+  container.querySelectorAll('.btn-cancel-edit').forEach(btn => {
+    btn.addEventListener('click', () => hideEditForm(parseInt(btn.dataset.index)));
   });
 }
 
@@ -210,6 +234,10 @@ function renderMonthView() {
 
 // Handlers
 function handleCheckIn() {
+  const btnIn = document.getElementById('btn-checkin');
+  btnIn.textContent = 'Wait...';
+  btnIn.disabled = true;
+
   const today = getTodayDateString();
   const now = new Date().toISOString();
 
@@ -227,6 +255,10 @@ function handleCheckIn() {
 function handleCheckOut() {
   const session = getActiveSession();
   if (!session || session.checkOutTime) return;
+
+  const btnOut = document.getElementById('btn-checkout');
+  btnOut.textContent = 'Wait...';
+  btnOut.disabled = true;
 
   const checkOutTime = new Date().toISOString();
   session.checkOutTime = checkOutTime;
@@ -275,24 +307,37 @@ document.addEventListener('DOMContentLoaded', () => {
   updateDisplay();
 });
 
-function handleEditSession(index) {
+function showEditForm(index) {
+  const timesEl = document.getElementById(`times-${index}`);
+  const formEl = document.getElementById(`edit-form-${index}`);
+  if (timesEl) timesEl.style.display = 'none';
+  if (formEl) formEl.style.display = 'flex';
+}
+
+function hideEditForm(index) {
+  const timesEl = document.getElementById(`times-${index}`);
+  const formEl = document.getElementById(`edit-form-${index}`);
+  if (timesEl) timesEl.style.display = 'block';
+  if (formEl) formEl.style.display = 'none';
+}
+
+function handleSaveSession(index, btn) {
   const todaySessions = getHistory().filter(h => h.date === getTodayDateString());
   const session = todaySessions[index];
   if (!session) return;
 
-  const newCheckIn = prompt('Check-in time (HH:MM 24h format):', formatTime(session.checkInTime));
-  if (!newCheckIn) return;
+  const inVal = document.getElementById(`edit-in-${index}`).value;
+  const outVal = document.getElementById(`edit-out-${index}`).value;
+  if (!inVal || !outVal) return;
 
-  const newCheckOut = prompt('Check-out time (HH:MM 24h format):', formatTime(session.checkOutTime));
-  if (!newCheckOut) return;
+  // Show loading state
+  const origText = btn.textContent;
+  btn.textContent = 'Wait...';
+  btn.disabled = true;
 
-  // Parse and rebuild ISO timestamps
   const date = session.date;
-  const [inH, inM] = newCheckIn.split(':').map(n => parseInt(n, 10));
-  const [outH, outM] = newCheckOut.split(':').map(n => parseInt(n, 10));
-
-  const checkInTime = new Date(`${date}T${String(inH).padStart(2, '0')}:${String(inM).padStart(2, '0')}:00`).toISOString();
-  const checkOutTime = new Date(`${date}T${String(outH).padStart(2, '0')}:${String(outM).padStart(2, '0')}:00`).toISOString();
+  const checkInTime = new Date(`${date}T${inVal}:00`).toISOString();
+  const checkOutTime = new Date(`${date}T${outVal}:00`).toISOString();
   const durationMs = Math.max(0, new Date(checkOutTime) - new Date(checkInTime));
 
   // Find in full history and update
