@@ -4,8 +4,6 @@ import { showToast } from './main.js';
 const STORAGE_KEY_CURRENT = 'skax_tracker_active_session';
 const STORAGE_KEY_HISTORY = 'skax_tracker_history';
 
-let timerInterval = null;
-
 // Helper: Format milliseconds into HH:MM:SS
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -89,51 +87,29 @@ function updateDisplay() {
   const timerEl = document.getElementById('timer-display');
   const statusEl = document.getElementById('session-status');
   const statusText = document.getElementById('status-text');
-  const startInfo = document.getElementById('session-start-info');
   const btnCheckIn = document.getElementById('btn-checkin');
   const btnCheckOut = document.getElementById('btn-checkout');
 
+  const todaySessions = getHistory().filter(h => h.date === getTodayDateString());
+  const todayTotal = todaySessions.reduce((sum, s) => sum + (s.durationMs || 0), 0);
+  timerEl.textContent = formatDuration(todayTotal);
+
   if (session && !session.checkOutTime) {
     // Currently checked in
-    const elapsed = Date.now() - new Date(session.checkInTime).getTime();
-    timerEl.textContent = formatDuration(elapsed);
     statusEl.classList.add('active');
-    statusText.textContent = 'Active Working Session';
-    startInfo.textContent = `Checked in at ${formatTime(session.checkInTime)}`;
-
+    statusText.textContent = 'Working now';
     btnCheckIn.disabled = true;
     btnCheckOut.disabled = false;
-
-    if (!timerInterval) {
-      timerInterval = setInterval(() => {
-        const currSession = getActiveSession();
-        if (currSession && !currSession.checkOutTime) {
-          const diff = Date.now() - new Date(currSession.checkInTime).getTime();
-          timerEl.textContent = formatDuration(diff);
-        }
-      }, 1000);
-    }
   } else {
     // Checked out or idle
-    if (timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-    }
     statusEl.classList.remove('active');
     btnCheckIn.disabled = false;
     btnCheckOut.disabled = true;
 
-    const todaySessions = getHistory().filter(h => h.date === getTodayDateString());
     if (todaySessions.length > 0) {
-      const todayTotal = todaySessions.reduce((sum, s) => sum + (s.durationMs || 0), 0);
-      const last = todaySessions[0];
-      timerEl.textContent = formatDuration(todayTotal);
       statusText.textContent = `${todaySessions.length} session${todaySessions.length > 1 ? 's' : ''} today`;
-      startInfo.textContent = `Last: ${formatTime(last.checkInTime)} – ${formatTime(last.checkOutTime)}`;
     } else {
-      timerEl.textContent = '00:00:00';
       statusText.textContent = 'Ready to Check-in';
-      startInfo.textContent = 'No active session today';
     }
   }
 
@@ -145,22 +121,27 @@ function renderHistory() {
   const countEl = document.getElementById('total-days-count');
   const history = getHistory();
 
+  // Filter to current month only (YYYY-MM)
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const thisMonthHistory = history.filter(h => h.date.startsWith(currentMonth));
+
   // Group sessions by date
   const byDate = {};
-  for (const item of history) {
+  for (const item of thisMonthHistory) {
     if (!byDate[item.date]) byDate[item.date] = [];
     byDate[item.date].push(item);
   }
   const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
 
   if (countEl) {
-    countEl.textContent = `${dates.length} day${dates.length === 1 ? '' : 's'} logged`;
+    countEl.textContent = `${dates.length} day${dates.length === 1 ? '' : 's'} this month`;
   }
 
   if (!container) return;
 
   if (dates.length === 0) {
-    container.innerHTML = '<p class="empty-state">No time logs yet. Press Check-in to start your first session.</p>';
+    container.innerHTML = '<p class="empty-state">No time logs this month. Press Check-in to start.</p>';
     return;
   }
 
