@@ -176,23 +176,16 @@ function editNote(id) {
 async function deleteNote(id) {
   if (!confirm('Are you sure you want to delete this note?')) return;
 
-  if (isDemo) {
-    notes = notes.filter(n => n.id !== id);
-    localStorage.setItem('demo-notes', JSON.stringify(notes));
-    renderNotes();
-    showToast('Note deleted', 'success');
+  const { error } = await supabase
+    .from('notes')
+    .delete()
+    .eq('id', id);
+  if (error) {
+    console.error('Error deleting note:', error);
+    showToast('Failed to delete note', 'error');
   } else {
-    const { error } = await supabase
-      .from('notes')
-      .delete()
-      .eq('id', id);
-    if (error) {
-      console.error('Error deleting note:', error);
-      showToast('Failed to delete note', 'error');
-    } else {
-      await fetchNotes();
-      showToast('Note deleted', 'success');
-    }
+    await fetchNotes();
+    showToast('Note deleted', 'success');
   }
 }
 
