@@ -2,26 +2,15 @@
 import { initSupabase, showToast } from './main.js';
 
 let supabase;
-let isDemo = false;
-let notes = []; // Cache for demo mode
-let currentNote = null; // For editing
+let notes = [];
+let currentNote = null;
 let searchQuery = '';
 
 async function init() {
-  if (window.isDemo()) {
-    isDemo = true;
-    console.log('Notes: demo mode');
-    // Load mock notes
-    notes = JSON.parse(localStorage.getItem('demo-notes') || '[]');
-    renderNotes();
-    setupForm();
-    setupSearch();
-  } else {
-    supabase = await initSupabase();
-    fetchNotes();
-    setupForm();
-    setupSearch();
-  }
+  supabase = await initSupabase();
+  fetchNotes();
+  setupForm();
+  setupSearch();
 }
 
 // Fetch notes from Supabase
@@ -127,55 +116,30 @@ function setupForm() {
     const content = document.getElementById('note-content').value.trim();
     if (!title || !content) return;
 
-    if (isDemo) {
-      if (currentNote) {
-        // Update existing note
-        const note = notes.find(n => n.id === currentNote);
-        if (note) {
-          note.title = title;
-          note.content = content;
-          note.updated_at = new Date().toISOString();
-        }
+    if (currentNote) {
+      // Update existing note
+      const { error } = await supabase
+        .from('notes')
+        .update({ title, content, updated_at: new Date().toISOString() })
+        .eq('id', currentNote);
+      if (error) {
+        console.error('Error updating note:', error);
+        showToast('Failed to update note', 'error');
       } else {
-        // Create new note
-        const newNote = {
-          id: Date.now().toString(),
-          title,
-          content,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        notes.unshift(newNote);
+        await fetchNotes();
+        showToast('Note updated', 'success');
       }
-      localStorage.setItem('demo-notes', JSON.stringify(notes));
-      renderNotes();
-      showToast(currentNote ? 'Note updated' : 'Note created', 'success');
     } else {
-      if (currentNote) {
-        // Update existing note
-        const { error } = await supabase
-          .from('notes')
-          .update({ title, content, updated_at: new Date().toISOString() })
-          .eq('id', currentNote);
-        if (error) {
-          console.error('Error updating note:', error);
-          showToast('Failed to update note', 'error');
-        } else {
-          await fetchNotes();
-          showToast('Note updated', 'success');
-        }
+      // Create new note
+      const { error } = await supabase
+        .from('notes')
+        .insert([{ title, content }]);
+      if (error) {
+        console.error('Error inserting note:', error);
+        showToast('Failed to save note', 'error');
       } else {
-        // Create new note
-        const { error } = await supabase
-          .from('notes')
-          .insert([{ title, content }]);
-        if (error) {
-          console.error('Error inserting note:', error);
-          showToast('Failed to save note', 'error');
-        } else {
-          await fetchNotes();
-          showToast('Note created', 'success');
-        }
+        await fetchNotes();
+        showToast('Note created', 'success');
       }
     }
     modal.style.display = 'none';

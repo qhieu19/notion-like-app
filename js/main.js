@@ -1,4 +1,4 @@
-// main.js - Supabase initialization + demo mode toggle
+// main.js - Supabase initialization
 const SUPABASE_URL = import.meta?.env?.SUPABASE_URL || 'YOUR_SUPABASE_URL';
 const SUPABASE_ANON_KEY = import.meta?.env?.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
 
@@ -7,10 +7,6 @@ export async function initSupabase() {
   const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
   return createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
-
-// Demo mode: shows mock data instead of database calls
-// Check localStorage on load
-window.isDemo = () => localStorage.getItem('demo-mode') !== 'false';
 
 // Toast notification system
 export function showToast(message, type = 'info') {

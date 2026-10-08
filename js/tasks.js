@@ -2,25 +2,15 @@
 import { initSupabase, showToast } from './main.js';
 
 let supabase;
-let isDemo = false;
-let tasks = []; // Cache for demo mode
-let currentTask = null; // For editing
+let tasks = [];
+let currentTask = null;
 let searchQuery = '';
 
 async function init() {
-  if (window.isDemo()) {
-    isDemo = true;
-    console.log('Tasks: demo mode');
-    tasks = JSON.parse(localStorage.getItem('demo-tasks') || '[]');
-    renderBoard();
-    setupForm();
-    setupSearch();
-  } else {
-    supabase = await initSupabase();
-    fetchTasks();
-    setupForm();
-    setupSearch();
-  }
+  supabase = await initSupabase();
+  fetchTasks();
+  setupForm();
+  setupSearch();
 }
 
 // Fetch tasks from Supabase
@@ -132,59 +122,30 @@ function setupForm() {
     const task_column = document.getElementById('task-column').value;
     if (!title) return;
 
-    if (isDemo) {
-      if (currentTask) {
-        // Update existing task
-        const task = tasks.find(t => t.id === currentTask);
-        if (task) {
-          task.title = title;
-          task.description = description;
-          task.priority = priority;
-          task.task_column = task_column;
-          task.updated_at = new Date().toISOString();
-        }
+    if (currentTask) {
+      // Update existing task
+      const { error } = await supabase
+        .from('tasks')
+        .update({ title, description, priority, task_column, updated_at: new Date().toISOString() })
+        .eq('id', currentTask);
+      if (error) {
+        console.error('Error updating task:', error);
+        showToast('Failed to update task', 'error');
       } else {
-        // Create new task
-        const newTask = {
-          id: Date.now().toString(),
-          title,
-          description,
-          priority,
-          task_column,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        tasks.unshift(newTask);
+        await fetchTasks();
+        showToast('Task updated', 'success');
       }
-      localStorage.setItem('demo-tasks', JSON.stringify(tasks));
-      renderBoard();
-      showToast(currentTask ? 'Task updated' : 'Task created', 'success');
     } else {
-      if (currentTask) {
-        // Update existing task
-        const { error } = await supabase
-          .from('tasks')
-          .update({ title, description, priority, task_column, updated_at: new Date().toISOString() })
-          .eq('id', currentTask);
-        if (error) {
-          console.error('Error updating task:', error);
-          showToast('Failed to update task', 'error');
-        } else {
-          await fetchTasks();
-          showToast('Task updated', 'success');
-        }
+      // Create new task
+      const { error } = await supabase
+        .from('tasks')
+        .insert([{ title, description, priority, task_column }]);
+      if (error) {
+        console.error('Error inserting task:', error);
+        showToast('Failed to save task', 'error');
       } else {
-        // Create new task
-        const { error } = await supabase
-          .from('tasks')
-          .insert([{ title, description, priority, task_column }]);
-        if (error) {
-          console.error('Error inserting task:', error);
-          showToast('Failed to save task', 'error');
-        } else {
-          await fetchTasks();
-          showToast('Task created', 'success');
-        }
+        await fetchTasks();
+        showToast('Task created', 'success');
       }
     }
     modal.style.display = 'none';
@@ -204,27 +165,16 @@ function setupForm() {
     if (e.target.classList.contains('move-column')) {
       const taskId = e.target.dataset.taskId;
       const newColumn = e.target.value;
-      if (isDemo) {
-        const task = tasks.find(t => t.id === taskId);
-        if (task) {
-          task.task_column = newColumn;
-          task.updated_at = new Date().toISOString();
-          localStorage.setItem('demo-tasks', JSON.stringify(tasks));
-          renderBoard();
-          showToast('Task moved', 'success');
-        }
+      const { error } = await supabase
+        .from('tasks')
+        .update({ task_column: newColumn, updated_at: new Date().toISOString() })
+        .eq('id', taskId);
+      if (error) {
+        console.error('Error moving task:', error);
+        showToast('Failed to move task', 'error');
       } else {
-        const { error } = await supabase
-          .from('tasks')
-          .update({ task_column: newColumn, updated_at: new Date().toISOString() })
-          .eq('id', taskId);
-        if (error) {
-          console.error('Error moving task:', error);
-          showToast('Failed to move task', 'error');
-        } else {
-          await fetchTasks();
-          showToast('Task moved', 'success');
-        }
+        await fetchTasks();
+        showToast('Task moved', 'success');
       }
     }
   });
@@ -251,23 +201,16 @@ function editTask(id) {
 async function deleteTask(id) {
   if (!confirm('Are you sure you want to delete this task?')) return;
 
-  if (isDemo) {
-    tasks = tasks.filter(t => t.id !== id);
-    localStorage.setItem('demo-tasks', JSON.stringify(tasks));
-    renderBoard();
-    showToast('Task deleted', 'success');
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('id', id);
+  if (error) {
+    console.error('Error deleting task:', error);
+    showToast('Failed to delete task', 'error');
   } else {
-    const { error } = await supabase
-      .from('tasks')
-      .delete()
-      .eq('id', id);
-    if (error) {
-      console.error('Error deleting task:', error);
-      showToast('Failed to delete task', 'error');
-    } else {
-      await fetchTasks();
-      showToast('Task deleted', 'success');
-    }
+    await fetchTasks();
+    showToast('Task deleted', 'success');
   }
 }
 
