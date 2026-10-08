@@ -65,7 +65,7 @@ function renderBoard() {
     body.innerHTML = columnTasks.length === 0
       ? '<p class="column-empty">No tasks</p>'
       : columnTasks.map(task => `
-        <div class="task-card" data-id="${task.id}" data-column="${task.column}">
+        <div class="task-card" data-id="${task.id}" data-column="${task.task_column}">
           <div class="task-card-header">
             <h4>${escapeHtml(task.title)}</h4>
             <div class="task-card-actions">
@@ -79,10 +79,10 @@ function renderBoard() {
             <small>${new Date(task.updated_at).toLocaleDateString()}</small>
           </div>
           <select class="move-column" data-task-id="${task.id}">
-            <option value="backlog" ${task.column === 'backlog' ? 'selected' : ''}>Backlog</option>
-            <option value="todo" ${task.column === 'todo' ? 'selected' : ''}>To Do</option>
-            <option value="in-progress" ${task.column === 'in-progress' ? 'selected' : ''}>In Progress</option>
-            <option value="done" ${task.column === 'done' ? 'selected' : ''}>Done</option>
+            <option value="backlog" ${task.task_column === 'backlog' ? 'selected' : ''}>Backlog</option>
+            <option value="todo" ${task.task_column === 'todo' ? 'selected' : ''}>To Do</option>
+            <option value="in-progress" ${task.task_column === 'in-progress' ? 'selected' : ''}>In Progress</option>
+            <option value="done" ${task.task_column === 'done' ? 'selected' : ''}>Done</option>
           </select>
         </div>
       `).join('');
@@ -129,7 +129,7 @@ function setupForm() {
     const title = document.getElementById('task-title').value.trim();
     const description = document.getElementById('task-description').value.trim();
     const priority = document.getElementById('task-priority').value;
-    const column = document.getElementById('task-column').value;
+    const task_column = document.getElementById('task-column').value;
     if (!title) return;
 
     if (isDemo) {
@@ -140,7 +140,7 @@ function setupForm() {
           task.title = title;
           task.description = description;
           task.priority = priority;
-          task.column = column;
+          task.task_column = task_column;
           task.updated_at = new Date().toISOString();
         }
       } else {
@@ -150,7 +150,7 @@ function setupForm() {
           title,
           description,
           priority,
-          column,
+          task_column,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
@@ -164,7 +164,7 @@ function setupForm() {
         // Update existing task
         const { error } = await supabase
           .from('tasks')
-          .update({ title, description, priority, column, updated_at: new Date().toISOString() })
+          .update({ title, description, priority, task_column, updated_at: new Date().toISOString() })
           .eq('id', currentTask);
         if (error) {
           console.error('Error updating task:', error);
@@ -177,7 +177,7 @@ function setupForm() {
         // Create new task
         const { error } = await supabase
           .from('tasks')
-          .insert([{ title, description, priority, column }]);
+          .insert([{ title, description, priority, task_column }]);
         if (error) {
           console.error('Error inserting task:', error);
           showToast('Failed to save task', 'error');
@@ -207,7 +207,7 @@ function setupForm() {
       if (isDemo) {
         const task = tasks.find(t => t.id === taskId);
         if (task) {
-          task.column = newColumn;
+          task.task_column = newColumn;
           task.updated_at = new Date().toISOString();
           localStorage.setItem('demo-tasks', JSON.stringify(tasks));
           renderBoard();
@@ -216,7 +216,7 @@ function setupForm() {
       } else {
         const { error } = await supabase
           .from('tasks')
-          .update({ column: newColumn, updated_at: new Date().toISOString() })
+          .update({ task_column: newColumn, updated_at: new Date().toISOString() })
           .eq('id', taskId);
         if (error) {
           console.error('Error moving task:', error);
@@ -243,7 +243,7 @@ function editTask(id) {
   document.getElementById('task-title').value = task.title;
   document.getElementById('task-description').value = task.description || '';
   document.getElementById('task-priority').value = task.priority;
-  document.getElementById('task-column').value = task.column;
+  document.getElementById('task-column').value = task.task_column;
   modal.style.display = 'flex';
 }
 

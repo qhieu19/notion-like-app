@@ -17,6 +17,7 @@
 Once your project is created:
 
 ### Open SQL Editor
+
 1. In Supabase dashboard, go to "SQL Editor"
 2. Click "New query"
 3. Copy and paste the SQL below:
@@ -38,7 +39,7 @@ CREATE TABLE tasks (
   description text,
   status text DEFAULT 'todo',
   priority text DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
-  column text DEFAULT 'todo',
+  task_column text DEFAULT 'todo',
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -57,7 +58,7 @@ CREATE POLICY "Enable all operations for tasks" ON tasks
 -- Create indexes for better performance
 CREATE INDEX notes_created_at_idx ON notes(created_at DESC);
 CREATE INDEX tasks_created_at_idx ON tasks(created_at DESC);
-CREATE INDEX tasks_column_idx ON tasks(column);
+CREATE INDEX tasks_column_idx ON tasks(task_column);
 ```
 
 4. Click "Run" to execute the SQL
@@ -86,12 +87,14 @@ CREATE INDEX tasks_column_idx ON tasks(column);
 ## Next Steps
 
 Once you have your Supabase credentials:
+
 - Continue to GitHub setup
 - Then deploy to Vercel with these credentials
 
 ---
 
 **Security Note**: The current policies allow public access. For production with user authentication, you'll want to:
+
 1. Enable Supabase Auth
 2. Update policies to check `auth.uid()`
 3. Add user_id columns to tables
