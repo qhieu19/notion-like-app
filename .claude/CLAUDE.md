@@ -14,7 +14,8 @@ Notion-like app: vanilla JS + Supabase backend. Notes & tasks CRUD. Deployed on 
 js/main.js       → Core: initSupabase() + showToast() [40 lines]
 js/notes.js      → Notes CRUD [180 lines]
 js/tasks.js      → Tasks CRUD + Kanban [250 lines]
-css/style.css    → All styles + dark mode [600 lines]
+js/tracker.js    → SKAX Time Tracker: Check-in/Check-out + History [160 lines]
+css/style.css    → All styles + dark mode [700 lines]
 ```
 
 ## Module Dependencies

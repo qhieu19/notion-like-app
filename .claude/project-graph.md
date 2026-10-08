@@ -6,11 +6,11 @@
    ├─ Exports: initSupabase(), showToast()
    └─ No dependencies
    
-2. js/notes.js OR js/tasks.js  [READ ONLY ONE unless both affected]
+2. js/notes.js OR js/tasks.js OR js/tracker.js  [READ ONLY ONE unless both affected]
    ├─ Import from: js/main.js
-   └─ Call: supabase.from('notes') or supabase.from('tasks')
+   └─ Call: supabase.from('notes') or supabase.from('tasks') or localStorage
    
-3. notes.html OR tasks.html    [READ ONLY if UI changes needed]
+3. notes.html OR tasks.html OR tracker.html    [READ ONLY if UI changes needed]
    └─ Load: corresponding .js file as module
 ```
 

@@ -3,41 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Personal Notion</title>
+  <title>hieu19 working app</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <header>
-    <h1>📓 Personal Workspace</h1>
-  </header>
-
-  <main>
-    <div class="home-container">
-      <div class="notion-home-header">
-        <div class="large-icon">📓</div>
-        <h2>Workspace</h2>
+  <main class="container">
+    <!-- Banner Header -->
+    <header class="banner-header">
+      <div class="badge-user">
+        <span class="badge-dot"></span>
+        <span>hieu19 · workspace active</span>
       </div>
+      <h1 class="banner-title">hieu19 working app</h1>
+      <p class="banner-desc">Central dashboard for note management, task kanban tracking, and SKAX time analytics.</p>
+    </header>
 
-      <div class="section-label" style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim);">Pages</div>
-      <div class="home-options">
-        <a href="notes.html" class="home-card">
-          <div class="home-card-icon">📝</div>
-          <div class="home-card-text">
-            <h3>Notes</h3>
-            <p>Write, format, and organize notes</p>
+    <!-- Main Navigation Actions -->
+    <div>
+      <div class="section-label" style="margin-bottom: 8px;">Quick Access</div>
+      <div class="action-grid">
+        <!-- 1. Note Button -->
+        <a href="notes.html" class="action-btn">
+          <div class="btn-icon-box icon-notes">📝</div>
+          <div class="btn-content">
+            <div class="btn-title-row">
+              <span class="btn-title">Notes</span>
+              <span class="btn-tag">Documents</span>
+            </div>
+            <span class="btn-desc">Create, search, and edit your Notion-style pages</span>
           </div>
-          <span class="home-card-arrow">›</span>
+          <span class="btn-arrow">→</span>
         </a>
-        <a href="tasks.html" class="home-card">
-          <div class="home-card-icon">📋</div>
-          <div class="home-card-text">
-            <h3>Task Board</h3>
-            <p>Kanban flow across backlog and status</p>
+
+        <!-- 2. Task Button -->
+        <a href="tasks.html" class="action-btn">
+          <div class="btn-icon-box icon-tasks">📋</div>
+          <div class="btn-content">
+            <div class="btn-title-row">
+              <span class="btn-title">Tasks</span>
+              <span class="btn-tag">Kanban</span>
+            </div>
+            <span class="btn-desc">Sprint board with backlog, to-do, in progress, and done</span>
           </div>
-          <span class="home-card-arrow">›</span>
+          <span class="btn-arrow">→</span>
+        </a>
+
+        <!-- 3. SKAX Time Tracker Button -->
+        <a href="tracker.html" class="action-btn">
+          <div class="btn-icon-box icon-tracker">⏱️</div>
+          <div class="btn-content">
+            <div class="btn-title-row">
+              <span class="btn-title">SKAX Time Tracker</span>
+              <span class="btn-tag">Productivity</span>
+            </div>
+            <span class="btn-desc">Log work sessions, monitor focus sprints, and track logs</span>
+          </div>
+          <span class="btn-arrow">→</span>
         </a>
       </div>
     </div>
+
+    <!-- Status footer -->
+    <footer class="footer-meta">
+      <span class="status-pill">⚡ Supabase Connected</span>
+      <span>v2.1 · Notion Style</span>
+    </footer>
   </main>
 
   <script type="module" src="js/main.js"></script>
