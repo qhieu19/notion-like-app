@@ -1,6 +1,6 @@
 // main.js - Supabase initialization
-const SUPABASE_URL = import.meta?.env?.SUPABASE_URL || 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = import.meta?.env?.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://jiylcwtvzqvteqsrgcnt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppeWxjd3R2enF2dGVxc3JnY250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NjgwOTgsImV4cCI6MjEwNzA0NDA5OH0.WRmzXzpKN1ctIbSvYfU-Q3ucXwDQl0wJYRPoaSNJ7XA';
 
 // Load Supabase client dynamically
 export async function initSupabase() {
