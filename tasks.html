@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tasks - Personal Notion-like App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Tasks</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header>
     <div class="header-left">
-      <a href="index.html" class="back-link">← Home</a>
+      <a href="index.html" class="back-link">‹</a>
       <h1>Task Board</h1>
     </div>
     <button id="new-task-btn">+ New Task</button>
@@ -17,27 +17,26 @@
 
   <main>
     <div class="toolbar">
-      <input type="text" id="search-tasks" placeholder="Search tasks...">
+      <input type="text" id="search-tasks" placeholder="Search tasks…" autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
 
-    <div id="loading" class="loading" style="display: none;">Loading...</div>
+    <div id="loading" class="loading" style="display: none;">Loading…</div>
 
     <div id="task-board">
-      <!-- Kanban columns will be inserted here -->
       <div class="column" data-column="backlog">
-        <div class="column-header"><h2>Backlog</h2><span class="count">0</span></div>
+        <div class="column-header"><span>Backlog</span><span class="count">0</span></div>
         <div class="column-body"></div>
       </div>
       <div class="column" data-column="todo">
-        <div class="column-header"><h2>To Do</h2><span class="count">0</span></div>
+        <div class="column-header"><span>To Do</span><span class="count">0</span></div>
         <div class="column-body"></div>
       </div>
       <div class="column" data-column="in-progress">
-        <div class="column-header"><h2>In Progress</h2><span class="count">0</span></div>
+        <div class="column-header"><span>In Progress</span><span class="count">0</span></div>
         <div class="column-body"></div>
       </div>
       <div class="column" data-column="done">
-        <div class="column-header"><h2>Done</h2><span class="count">0</span></div>
+        <div class="column-header"><span>Done</span><span class="count">0</span></div>
         <div class="column-body"></div>
       </div>
     </div>
@@ -48,17 +47,21 @@
     <div class="modal-content">
       <h2>New Task</h2>
       <form id="task-form">
-        <input type="text" id="task-title" placeholder="Task title" required>
-        <textarea id="task-description" placeholder="Description (optional)" rows="4"></textarea>
+        <label>Title
+          <input type="text" id="task-title" placeholder="Task title" required autocomplete="off">
+        </label>
+        <label>Description
+          <textarea id="task-description" placeholder="Optional description…" rows="3"></textarea>
+        </label>
         <div class="form-row">
-          <label>Priority:
+          <label>Priority
             <select id="task-priority">
               <option value="low">Low</option>
               <option value="medium" selected>Medium</option>
               <option value="high">High</option>
             </select>
           </label>
-          <label>Column:
+          <label>Column
             <select id="task-column">
               <option value="backlog">Backlog</option>
               <option value="todo" selected>To Do</option>
@@ -69,7 +72,7 @@
         </div>
         <div class="form-actions">
           <button type="button" id="cancel-task">Cancel</button>
-          <button type="submit">Save Task</button>
+          <button type="submit">Save</button>
         </div>
       </form>
     </div>
