@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Task Tracking Redesign Preview</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .date-header {
+      text-align: center;
+      padding: 20px 0 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .date-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    .status-filters {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 16px;
+      background: var(--bg);
+    }
+    .status-btn {
+      padding: 16px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card-bg);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-btn:hover {
+      background: var(--hover-bg);
+      border-color: var(--primary);
+    }
+    .status-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .status-icon {
+      font-size: 24px;
+    }
+    .status-label {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-count {
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .task-list {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .task-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .task-card:hover {
+      background: var(--hover-bg);
+      border-color: var(--primary);
+    }
+    .task-card:active {
+      transform: scale(0.98);
+    }
+    .task-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .task-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+    .task-priority {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .task-priority.high {
+      background: #ffeef0;
+      color: #d32f2f;
+    }
+    .task-priority.medium {
+      background: #fff4e5;
+      color: #f57c00;
+    }
+    .task-priority.low {
+      background: #e8f5e9;
+      color: #388e3c;
+    }
+    body.dark .task-priority.high {
+      background: rgba(211, 47, 47, 0.2);
+      color: #ff8a80;
+    }
+    body.dark .task-priority.medium {
+      background: rgba(245, 124, 0, 0.2);
+      color: #ffb74d;
+    }
+    body.dark .task-priority.low {
+      background: rgba(56, 142, 60, 0.2);
+      color: #81c784;
+    }
+    .task-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .add-task-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .add-task-btn:hover {
+      background: var(--primary-hover);
+      transform: scale(1.05);
+    }
+    .add-task-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Task Detail Modal */
+    .task-detail-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .task-detail-overlay.show {
+      display: flex;
+    }
+    .task-detail-card {
+      background: var(--bg);
+      border-radius: 12px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .detail-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      flex: 1;
+    }
+    .close-detail {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+    .close-detail:hover {
+      background: var(--hover-bg);
+    }
+    .detail-section {
+      margin-bottom: 20px;
+    }
+    .detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .detail-content {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .detail-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 24px;
+    }
+    .btn-action {
+      flex: 1;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-action:hover {
+      background: var(--hover-bg);
+    }
+    .btn-action.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .btn-action.primary:hover {
+      background: var(--primary-hover);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <a href="index.html" class="back-link">‹ Home</a>
+      <span style="color: var(--text-dim); font-size: 13px;">/</span>
+      <h1>📋 Tasks</h1>
+    </div>
+  </header>
+
+  <main style="max-width: 540px; padding-bottom: 100px;">
+    <!-- Date Header -->
+    <div class="date-header">
+      <div class="date-text">Wednesday, October 9, 2026</div>
+    </div>
+
+    <!-- Status Filter Buttons -->
+    <div class="status-filters">
+      <button class="status-btn active" onclick="filterStatus('todo')">
+        <div class="status-icon">⭕</div>
+        <div class="status-label">To Do</div>
+        <div class="status-count">5</div>
+      </button>
+      <button class="status-btn" onclick="filterStatus('in-progress')">
+        <div class="status-icon">🔄</div>
+        <div class="status-label">In Progress</div>
+        <div class="status-count">3</div>
+      </button>
+      <button class="status-btn" onclick="filterStatus('done')">
+        <div class="status-icon">✓</div>
+        <div class="status-label">Done</div>
+        <div class="status-count">12</div>
+      </button>
+    </div>
+
+    <!-- Task List -->
+    <div class="task-list">
+      <div class="task-card" onclick="showTaskDetail(1)">
+        <div class="task-header">
+          <div class="task-title">Fix login authentication bug</div>
+          <div class="task-priority high">High</div>
+        </div>
+        <div class="task-desc">Users are experiencing session timeout issues after 5 minutes. Need to investigate token refresh mechanism.</div>
+        <div class="task-meta">
+          <span>📅 Due: Oct 10</span>
+          <span>⏱️ 2h estimated</span>
+        </div>
+      </div>
+
+      <div class="task-card" onclick="showTaskDetail(2)">
+        <div class="task-header">
+          <div class="task-title">Update documentation</div>
+          <div class="task-priority medium">Medium</div>
+        </div>
+        <div class="task-desc">Add API reference for new endpoints and update deployment guide.</div>
+        <div class="task-meta">
+          <span>📅 Due: Oct 12</span>
+          <span>⏱️ 4h estimated</span>
+        </div>
+      </div>
+
+      <div class="task-card" onclick="showTaskDetail(3)">
+        <div class="task-header">
+          <div class="task-title">Refactor CSS variables</div>
+          <div class="task-priority low">Low</div>
+        </div>
+        <div class="task-desc">Consolidate theme tokens and remove duplicate color definitions.</div>
+        <div class="task-meta">
+          <span>📅 Due: Oct 15</span>
+          <span>⏱️ 1h estimated</span>
+        </div>
+      </div>
+
+      <div class="task-card" onclick="showTaskDetail(4)">
+        <div class="task-header">
+          <div class="task-title">Design new onboarding flow</div>
+          <div class="task-priority medium">Medium</div>
+        </div>
+        <div class="task-desc">Create wireframes and user flow for improved first-time experience.</div>
+        <div class="task-meta">
+          <span>📅 Due: Oct 14</span>
+          <span>⏱️ 6h estimated</span>
+        </div>
+      </div>
+
+      <div class="task-card" onclick="showTaskDetail(5)">
+        <div class="task-header">
+          <div class="task-title">Performance optimization</div>
+          <div class="task-priority high">High</div>
+        </div>
+        <div class="task-desc">Reduce bundle size and optimize initial load time. Target: under 2s TTI.</div>
+        <div class="task-meta">
+          <span>📅 Due: Oct 11</span>
+          <span>⏱️ 8h estimated</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Task Button -->
+    <button class="add-task-btn" onclick="addTask()">+</button>
+  </main>
+
+  <!-- Task Detail Modal -->
+  <div class="task-detail-overlay" id="taskDetailModal" onclick="closeTaskDetail(event)">
+    <div class="task-detail-card" onclick="event.stopPropagation()">
+      <div class="detail-header">
+        <div class="detail-title">Fix login authentication bug</div>
+        <button class="close-detail" onclick="closeTaskDetail()">×</button>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Priority</div>
+        <div class="detail-content">
+          <span class="task-priority high">High</span>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Status</div>
+        <div class="detail-content">To Do</div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Description</div>
+        <div class="detail-content">Users are experiencing session timeout issues after 5 minutes. Need to investigate token refresh mechanism and implement proper session management.</div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Due Date</div>
+        <div class="detail-content">October 10, 2026</div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Estimated Time</div>
+        <div class="detail-content">2 hours</div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Created</div>
+        <div class="detail-content">October 8, 2026 at 10:30 AM</div>
+      </div>
+
+      <div class="detail-actions">
+        <button class="btn-action">Edit</button>
+        <button class="btn-action">Delete</button>
+        <button class="btn-action primary">Mark as Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function filterStatus(status) {
+      document.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.closest('.status-btn').classList.add('active');
+      console.log('Filter:', status);
+    }
+
+    function showTaskDetail(taskId) {
+      document.getElementById('taskDetailModal').classList.add('show');
+    }
+
+    function closeTaskDetail(event) {
+      if (!event || event.target.id === 'taskDetailModal') {
+        document.getElementById('taskDetailModal').classList.remove('show');
+      }
+    }
+
+    function addTask() {
+      alert('Add task form will open here');
+    }
+  </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Task Board - Notion</title>
+  <title>Tasks - Notion</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -11,69 +11,118 @@
     <div class="header-left">
       <a href="index.html" class="back-link">‹ Home</a>
       <span style="color: var(--text-dim); font-size: 13px;">/</span>
-      <h1>📋 Task Board</h1>
+      <h1>📋 Tasks</h1>
     </div>
-    <button id="new-task-btn">+ New</button>
   </header>
 
-  <main>
-    <div class="toolbar">
-      <input type="text" id="search-tasks" placeholder="Filter tasks..." autocomplete="off" autocorrect="off" spellcheck="false">
+  <main style="max-width: 540px; padding-bottom: 100px;">
+    <!-- Date Header -->
+    <div class="date-header">
+      <div class="date-text" id="current-date">Loading...</div>
     </div>
 
-    <div id="loading" class="loading" style="display: none;">Loading...</div>
-
-    <div id="task-board">
-      <div class="column" data-column="backlog">
-        <div class="column-header"><span>Backlog</span><span class="count">0</span></div>
-        <div class="column-body"></div>
-      </div>
-      <div class="column" data-column="todo">
-        <div class="column-header"><span>To Do</span><span class="count">0</span></div>
-        <div class="column-body"></div>
-      </div>
-      <div class="column" data-column="in-progress">
-        <div class="column-header"><span>In Progress</span><span class="count">0</span></div>
-        <div class="column-body"></div>
-      </div>
-      <div class="column" data-column="done">
-        <div class="column-header"><span>Done</span><span class="count">0</span></div>
-        <div class="column-body"></div>
-      </div>
+    <!-- Status Filter Buttons -->
+    <div class="status-filters">
+      <button class="status-btn active" data-status="todo">
+        <div class="status-icon">⭕</div>
+        <div class="status-label">To Do</div>
+        <div class="status-count" id="count-todo">0</div>
+      </button>
+      <button class="status-btn" data-status="in-progress">
+        <div class="status-icon">🔄</div>
+        <div class="status-label">In Progress</div>
+        <div class="status-count" id="count-in-progress">0</div>
+      </button>
+      <button class="status-btn" data-status="done">
+        <div class="status-icon">✓</div>
+        <div class="status-label">Done</div>
+        <div class="status-count" id="count-done">0</div>
+      </button>
     </div>
+
+    <!-- Task List -->
+    <div class="task-list" id="task-list">
+      <p class="empty-state">No tasks yet. Press + to create one.</p>
+    </div>
+
+    <!-- Add Task Button -->
+    <button class="add-task-btn" id="add-task-btn">+</button>
   </main>
 
+  <!-- Task Detail Modal -->
+  <div class="task-detail-overlay" id="task-detail-modal">
+    <div class="task-detail-card">
+      <div class="detail-header">
+        <div class="detail-title" id="detail-title">Task Title</div>
+        <button class="close-detail" id="close-detail">×</button>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Priority</div>
+        <div class="detail-content" id="detail-priority"></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Status</div>
+        <div class="detail-content" id="detail-status"></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Description</div>
+        <div class="detail-content" id="detail-description">No description</div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Column</div>
+        <div class="detail-content" id="detail-column"></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Created</div>
+        <div class="detail-content" id="detail-created"></div>
+      </div>
+
+      <div class="detail-actions">
+        <button class="btn-action" id="btn-edit-task">Edit</button>
+        <button class="btn-action" id="btn-delete-task">Delete</button>
+        <button class="btn-action primary" id="btn-toggle-status">Mark as Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Task Form Modal -->
-  <div id="task-modal" class="modal">
+  <div class="modal" id="task-form-modal">
     <div class="modal-content">
-      <h2>New task</h2>
+      <h2 id="form-title">New task</h2>
       <form id="task-form">
-        <label>Title
-          <input type="text" id="task-title" placeholder="Untitled task" required autocomplete="off">
-        </label>
-        <label>Description
-          <textarea id="task-description" placeholder="Add details..." rows="3"></textarea>
-        </label>
-        <div class="form-row">
-          <label>Priority
-            <select id="task-priority">
-              <option value="low">Low</option>
-              <option value="medium" selected>Medium</option>
-              <option value="high">High</option>
-            </select>
-          </label>
-          <label>Column
-            <select id="task-column">
-              <option value="backlog">Backlog</option>
-              <option value="todo" selected>To Do</option>
-              <option value="in-progress">In Progress</option>
-              <option value="done">Done</option>
-            </select>
-          </label>
-        </div>
-        <div class="form-actions">
+        <input type="text" id="task-title" placeholder="Task title" required autocomplete="off">
+        <textarea id="task-description" placeholder="Description (optional)" rows="4"></textarea>
+
+        <label for="task-status">Status</label>
+        <select id="task-status" required>
+          <option value="todo">To Do</option>
+          <option value="in-progress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
+
+        <label for="task-priority">Priority</label>
+        <select id="task-priority" required>
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+
+        <label for="task-column">Column</label>
+        <select id="task-column" required>
+          <option value="backlog">Backlog</option>
+          <option value="todo" selected>To Do</option>
+          <option value="in-progress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
+
+        <div class="modal-actions">
           <button type="button" id="cancel-task">Cancel</button>
-          <button type="submit">Done</button>
+          <button type="submit">Save task</button>
         </div>
       </form>
     </div>

@@ -1,237 +1,305 @@
-// tasks.js - Handle tasks CRUD and kanban board
+// js/tasks.js - Task tracking with new list view
 import { initSupabase, showToast } from './main.js';
 
-let supabase;
-let tasks = [];
-let currentTask = null;
-let searchQuery = '';
+let supabase = null;
+let allTasks = [];
+let currentFilter = 'todo';
+let editingTaskId = null;
 
-async function init() {
-  supabase = await initSupabase();
-  fetchTasks();
-  setupForm();
-  setupSearch();
+// Format date to readable string
+function formatDate(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 }
 
-// Fetch tasks from Supabase
-async function fetchTasks() {
-  const loading = document.getElementById('loading');
-  if (loading) loading.style.display = 'block';
+function formatDateTime(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
 
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('*')
-    .order('created_at', { ascending: false });
+function capitalizeStatus(status) {
+  const map = {
+    'todo': 'To Do',
+    'in-progress': 'In Progress',
+    'done': 'Done',
+    'backlog': 'Backlog'
+  };
+  return map[status] || status;
+}
 
-  if (loading) loading.style.display = 'none';
+async function loadTasks() {
+  if (!supabase) return;
 
-  if (error) {
-    console.error('Error fetching tasks:', error);
+  try {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    allTasks = data || [];
+    updateCounts();
+    renderTasks();
+  } catch (err) {
+    console.error('Failed to load tasks', err);
     showToast('Failed to load tasks', 'error');
-  } else {
-    tasks = data;
-    renderBoard();
   }
 }
 
-// Render kanban board
-function renderBoard() {
-  const columns = ['backlog', 'todo', 'in-progress', 'done'];
+function updateCounts() {
+  const counts = {
+    'todo': 0,
+    'in-progress': 0,
+    'done': 0
+  };
 
-  // Filter tasks based on search
-  const filteredTasks = searchQuery
-    ? tasks.filter(t =>
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : tasks;
-
-  columns.forEach(col => {
-    const columnTasks = filteredTasks.filter(t => t.task_column === col);
-    const column = document.querySelector(`.column[data-column="${col}"]`);
-    const header = column.querySelector('.count');
-    const body = column.querySelector('.column-body');
-    header.textContent = columnTasks.length;
-    body.innerHTML = columnTasks.length === 0
-      ? '<p class="column-empty">No tasks</p>'
-      : columnTasks.map(task => `
-        <div class="task-card" data-id="${task.id}" data-column="${task.task_column}">
-          <div class="task-card-header">
-            <h4>${escapeHtml(task.title)}</h4>
-            <div class="task-card-actions">
-              <button class="btn-icon-small edit-task" data-id="${task.id}" title="Edit">✏️</button>
-              <button class="btn-icon-small delete-task" data-id="${task.id}" title="Delete">🗑️</button>
-            </div>
-          </div>
-          ${task.description ? `<p>${escapeHtml(task.description).substring(0, 80)}${task.description.length > 80 ? '...' : ''}</p>` : ''}
-          <div class="task-meta">
-            <span class="priority ${task.priority}">${task.priority}</span>
-            <small>${new Date(task.updated_at).toLocaleDateString()}</small>
-          </div>
-          <select class="move-column" data-task-id="${task.id}">
-            <option value="backlog" ${task.task_column === 'backlog' ? 'selected' : ''}>Backlog</option>
-            <option value="todo" ${task.task_column === 'todo' ? 'selected' : ''}>To Do</option>
-            <option value="in-progress" ${task.task_column === 'in-progress' ? 'selected' : ''}>In Progress</option>
-            <option value="done" ${task.task_column === 'done' ? 'selected' : ''}>Done</option>
-          </select>
-        </div>
-      `).join('');
+  allTasks.forEach(task => {
+    if (counts.hasOwnProperty(task.status)) {
+      counts[task.status]++;
+    }
   });
 
-  // Add event listeners for edit and delete buttons
-  document.querySelectorAll('.edit-task').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      editTask(e.target.dataset.id);
-    });
-  });
+  document.getElementById('count-todo').textContent = counts['todo'];
+  document.getElementById('count-in-progress').textContent = counts['in-progress'];
+  document.getElementById('count-done').textContent = counts['done'];
+}
 
-  document.querySelectorAll('.delete-task').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteTask(e.target.dataset.id);
-    });
+function renderTasks() {
+  const container = document.getElementById('task-list');
+  const filtered = allTasks.filter(t => t.status === currentFilter);
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<p class="empty-state">No tasks in this status. Press + to create one.</p>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(task => `
+    <div class="task-card" data-task-id="${task.id}">
+      <div class="task-header">
+        <div class="task-title">${task.title}</div>
+        <div class="task-priority ${task.priority}">${task.priority.toUpperCase()}</div>
+      </div>
+      ${task.description ? `<div class="task-desc">${task.description}</div>` : ''}
+      <div class="task-meta">
+        <span>📊 ${capitalizeStatus(task.task_column)}</span>
+        <span>📅 ${new Date(task.created_at).toLocaleDateString()}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // Attach click handlers
+  container.querySelectorAll('.task-card').forEach(card => {
+    card.addEventListener('click', () => showTaskDetail(card.dataset.taskId));
   });
 }
 
-// Setup form submit and cancel
-function setupForm() {
-  const modal = document.getElementById('task-modal');
-  const form = document.getElementById('task-form');
-  const cancelBtn = document.getElementById('cancel-task');
-  const newTaskBtn = document.getElementById('new-task-btn');
-  const modalTitle = modal.querySelector('h2');
-
-  newTaskBtn.onclick = () => {
-    currentTask = null;
-    form.reset();
-    modalTitle.textContent = 'New Task';
-    modal.style.display = 'flex';
-  };
-
-  cancelBtn.onclick = () => {
-    modal.style.display = 'none';
-    currentTask = null;
-  };
-
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    const title = document.getElementById('task-title').value.trim();
-    const description = document.getElementById('task-description').value.trim();
-    const priority = document.getElementById('task-priority').value;
-    const task_column = document.getElementById('task-column').value;
-    if (!title) return;
-
-    if (currentTask) {
-      // Update existing task
-      const { error } = await supabase
-        .from('tasks')
-        .update({ title, description, priority, task_column, updated_at: new Date().toISOString() })
-        .eq('id', currentTask);
-      if (error) {
-        console.error('Error updating task:', error);
-        showToast('Failed to update task', 'error');
-      } else {
-        await fetchTasks();
-        showToast('Task updated', 'success');
-      }
-    } else {
-      // Create new task
-      const { error } = await supabase
-        .from('tasks')
-        .insert([{ title, description, priority, task_column }]);
-      if (error) {
-        console.error('Error inserting task:', error);
-        showToast('Failed to save task', 'error');
-      } else {
-        await fetchTasks();
-        showToast('Task created', 'success');
-      }
-    }
-    modal.style.display = 'none';
-    currentTask = null;
-  };
-
-  // Close modal when clicking outside
-  window.onclick = (e) => {
-    if (e.target === modal) {
-      modal.style.display = 'none';
-      currentTask = null;
-    }
-  };
-
-  // Move task between columns
-  document.addEventListener('change', async (e) => {
-    if (e.target.classList.contains('move-column')) {
-      const taskId = e.target.dataset.taskId;
-      const newColumn = e.target.value;
-      const { error } = await supabase
-        .from('tasks')
-        .update({ task_column: newColumn, updated_at: new Date().toISOString() })
-        .eq('id', taskId);
-      if (error) {
-        console.error('Error moving task:', error);
-        showToast('Failed to move task', 'error');
-      } else {
-        await fetchTasks();
-        showToast('Task moved', 'success');
-      }
-    }
-  });
-}
-
-// Edit task
-function editTask(id) {
-  const task = tasks.find(t => t.id === id);
+function showTaskDetail(taskId) {
+  const task = allTasks.find(t => t.id === taskId);
   if (!task) return;
 
-  currentTask = id;
-  const modal = document.getElementById('task-modal');
-  const modalTitle = modal.querySelector('h2');
+  document.getElementById('detail-title').textContent = task.title;
+  document.getElementById('detail-priority').innerHTML = `<span class="task-priority ${task.priority}">${task.priority.toUpperCase()}</span>`;
+  document.getElementById('detail-status').textContent = capitalizeStatus(task.status);
+  document.getElementById('detail-description').textContent = task.description || 'No description';
+  document.getElementById('detail-column').textContent = capitalizeStatus(task.task_column);
+  document.getElementById('detail-created').textContent = formatDateTime(task.created_at);
 
-  modalTitle.textContent = 'Edit Task';
-  document.getElementById('task-title').value = task.title;
-  document.getElementById('task-description').value = task.description || '';
-  document.getElementById('task-priority').value = task.priority;
-  document.getElementById('task-column').value = task.task_column;
-  modal.style.display = 'flex';
-}
-
-// Delete task
-async function deleteTask(id) {
-  if (!confirm('Are you sure you want to delete this task?')) return;
-
-  const { error } = await supabase
-    .from('tasks')
-    .delete()
-    .eq('id', id);
-  if (error) {
-    console.error('Error deleting task:', error);
-    showToast('Failed to delete task', 'error');
+  const toggleBtn = document.getElementById('btn-toggle-status');
+  if (task.status === 'done') {
+    toggleBtn.textContent = 'Move to To Do';
   } else {
-    await fetchTasks();
-    showToast('Task deleted', 'success');
+    toggleBtn.textContent = 'Mark as Done';
+  }
+
+  // Store current task ID for actions
+  document.getElementById('task-detail-modal').dataset.taskId = taskId;
+  document.getElementById('task-detail-modal').classList.add('show');
+}
+
+function closeTaskDetail() {
+  document.getElementById('task-detail-modal').classList.remove('show');
+}
+
+function openTaskForm(taskId = null) {
+  const modal = document.getElementById('task-form-modal');
+  const form = document.getElementById('task-form');
+  const title = document.getElementById('form-title');
+
+  if (taskId) {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    title.textContent = 'Edit task';
+    document.getElementById('task-title').value = task.title;
+    document.getElementById('task-description').value = task.description || '';
+    document.getElementById('task-status').value = task.status;
+    document.getElementById('task-priority').value = task.priority;
+    document.getElementById('task-column').value = task.task_column;
+    editingTaskId = taskId;
+  } else {
+    title.textContent = 'New task';
+    form.reset();
+    document.getElementById('task-status').value = currentFilter;
+    editingTaskId = null;
+  }
+
+  modal.style.display = 'flex';
+  document.getElementById('task-title').focus();
+}
+
+function closeTaskForm() {
+  document.getElementById('task-form-modal').style.display = 'none';
+  editingTaskId = null;
+}
+
+async function saveTask(e) {
+  e.preventDefault();
+
+  const title = document.getElementById('task-title').value.trim();
+  const description = document.getElementById('task-description').value.trim();
+  const status = document.getElementById('task-status').value;
+  const priority = document.getElementById('task-priority').value;
+  const task_column = document.getElementById('task-column').value;
+
+  if (!title) return;
+
+  const taskData = {
+    title,
+    description,
+    status,
+    priority,
+    task_column,
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    if (editingTaskId) {
+      const { error } = await supabase
+        .from('tasks')
+        .update(taskData)
+        .eq('id', editingTaskId);
+
+      if (error) throw error;
+      showToast('Task updated', 'success');
+    } else {
+      const { error } = await supabase
+        .from('tasks')
+        .insert(taskData);
+
+      if (error) throw error;
+      showToast('Task created', 'success');
+    }
+
+    closeTaskForm();
+    await loadTasks();
+  } catch (err) {
+    console.error('Failed to save task', err);
+    showToast('Failed to save task', 'error');
   }
 }
 
-// Setup search functionality
-function setupSearch() {
-  const searchInput = document.getElementById('search-tasks');
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      searchQuery = e.target.value.trim();
-      renderBoard();
+async function deleteTask(taskId) {
+  if (!confirm('Delete this task? This cannot be undone.')) return;
+
+  try {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId);
+
+    if (error) throw error;
+
+    showToast('Task deleted', 'info');
+    closeTaskDetail();
+    await loadTasks();
+  } catch (err) {
+    console.error('Failed to delete task', err);
+    showToast('Failed to delete task', 'error');
+  }
+}
+
+async function toggleTaskStatus(taskId) {
+  const task = allTasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  const newStatus = task.status === 'done' ? 'todo' : 'done';
+
+  try {
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', taskId);
+
+    if (error) throw error;
+
+    showToast(newStatus === 'done' ? 'Task completed!' : 'Task moved to To Do', 'success');
+    closeTaskDetail();
+    await loadTasks();
+  } catch (err) {
+    console.error('Failed to update task', err);
+    showToast('Failed to update task', 'error');
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', async () => {
+  supabase = await initSupabase();
+
+  // Set current date
+  document.getElementById('current-date').textContent = formatDate(new Date().toISOString());
+
+  // Status filter buttons
+  document.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.status;
+      renderTasks();
     });
-  }
-}
+  });
 
-// Utility: escape HTML to prevent XSS
-function escapeHtml(text) {
-  if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
+  // Add task button
+  document.getElementById('add-task-btn').addEventListener('click', () => openTaskForm());
 
-// Initialize on load
-document.addEventListener('DOMContentLoaded', init);
+  // Task form
+  document.getElementById('task-form').addEventListener('submit', saveTask);
+  document.getElementById('cancel-task').addEventListener('click', closeTaskForm);
+
+  // Task detail modal
+  document.getElementById('close-detail').addEventListener('click', closeTaskDetail);
+  document.getElementById('task-detail-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'task-detail-modal') closeTaskDetail();
+  });
+
+  document.getElementById('btn-edit-task').addEventListener('click', () => {
+    const taskId = document.getElementById('task-detail-modal').dataset.taskId;
+    closeTaskDetail();
+    openTaskForm(taskId);
+  });
+
+  document.getElementById('btn-delete-task').addEventListener('click', () => {
+    const taskId = document.getElementById('task-detail-modal').dataset.taskId;
+    deleteTask(taskId);
+  });
+
+  document.getElementById('btn-toggle-status').addEventListener('click', () => {
+    const taskId = document.getElementById('task-detail-modal').dataset.taskId;
+    toggleTaskStatus(taskId);
+  });
+
+  await loadTasks();
+});
