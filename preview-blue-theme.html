@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Task Redesign - Blue Theme Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #0d47a1;
+      --primary-light: #1976d2;
+      --text: #1a1a1a;
+      --text-muted: #666;
+      --text-dim: #999;
+      --bg: #f5f5f5;
+      --card-bg: #ffffff;
+      --border: #e0e0e0;
+      --overdue: #d32f2f;
+      --overdue-bg: #ffebee;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 80px;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      background: var(--card-bg);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .date-small {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat-card {
+      background: var(--bg);
+      padding: 16px 12px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* Active Task Card */
+    .active-section {
+      padding: 16px 20px;
+      background: var(--card-bg);
+      margin-bottom: 12px;
+    }
+    .active-card {
+      border: 2px solid var(--primary);
+      border-radius: 16px;
+      padding: 20px;
+      background: var(--card-bg);
+    }
+    .active-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .active-status {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .active-deadline {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .active-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .active-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .progress-bar-container {
+      background: var(--bg);
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    .btn-complete {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-complete:active {
+      transform: scale(0.98);
+      background: var(--primary-light);
+    }
+
+    /* Task List */
+    .section-header {
+      padding: 16px 20px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--bg);
+    }
+    .task-list {
+      padding: 0 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--bg);
+    }
+    .task-item {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .task-item:active {
+      transform: scale(0.98);
+      border-color: var(--primary);
+    }
+    .task-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .task-item-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+    .badge-overdue {
+      background: var(--overdue-bg);
+      color: var(--overdue);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-status {
+      background: var(--bg);
+      color: var(--text-muted);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .task-item-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .task-item-progress {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .mini-progress {
+      flex: 1;
+      height: 4px;
+      background: var(--bg);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-right: 12px;
+    }
+    .mini-progress-bar {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .task-count {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 20px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+    .nav-item {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.15s;
+    }
+    .nav-item.active {
+      color: var(--primary);
+    }
+    .nav-item:active {
+      background: var(--bg);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="date-small">Thứ Bảy, 10/10</div>
+      <div class="page-title">Hôm nay</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Cần làm</div>
+        <div class="stat-value">7</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Đang làm</div>
+        <div class="stat-value">3</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Xong tuần này</div>
+        <div class="stat-value">12</div>
+      </div>
+    </div>
+
+    <!-- Active Task -->
+    <div class="active-section">
+      <div class="active-card">
+        <div class="active-header">
+          <div class="active-status">Đang làm</div>
+          <div class="active-deadline">Hạn hôm nay</div>
+        </div>
+        <div class="active-title">Viết spec tính năng thông báo</div>
+        <div class="active-meta">Còn 1 việc con · 2/3 xong</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" style="width: 66.67%"></div>
+        </div>
+        <button class="btn-complete">Hoàn thành</button>
+      </div>
+    </div>
+
+    <!-- Task List -->
+    <div class="section-header">Cần xử lý</div>
+    <div class="task-list">
+      <div class="task-item">
+        <div class="task-item-header">
+          <div class="task-item-title">Tích hợp cổng thanh toán</div>
+          <div class="badge-overdue">Quá hạn 2 ngày</div>
+        </div>
+        <div class="task-item-meta">Backend · Ưu tiên cao</div>
+        <div class="task-item-progress">
+          <div class="mini-progress">
+            <div class="mini-progress-bar" style="width: 66.67%"></div>
+          </div>
+          <div class="task-count">2/3</div>
+        </div>
+      </div>
+
+      <div class="task-item">
+        <div class="task-item-header">
+          <div class="task-item-title">Duyệt thiết kế onboarding</div>
+          <div class="badge-status">Cần làm</div>
+        </div>
+        <div class="task-item-meta">Design · Hạn hôm nay</div>
+        <div class="task-item-progress">
+          <div class="mini-progress">
+            <div class="mini-progress-bar" style="width: 0%"></div>
+          </div>
+          <div class="task-count">0/2</div>
+        </div>
+      </div>
+
+      <div class="task-item">
+        <div class="task-item-header">
+          <div class="task-item-title">Chuẩn bị báo cáo sprint</div>
+          <div class="badge-status">Cần làm</div>
+        </div>
+        <div class="task-item-meta">Quản lý · Hạn 12/10</div>
+        <div class="task-item-progress">
+          <div class="mini-progress">
+            <div class="mini-progress-bar" style="width: 0%"></div>
+          </div>
+          <div class="task-count">0/4</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+      <div class="nav-item active">Hôm nay</div>
+      <div class="nav-item">Bảng</div>
+      <div class="nav-item">Thêm</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,41 +1,38 @@
-// js/tasks.js - Task tracking with new list view
+// js/tasks.js - Task tracking with blue theme
 import { initSupabase, showToast } from './main.js';
 
 let supabase = null;
 let allTasks = [];
-let currentFilter = 'todo';
 let editingTaskId = null;
 
-// Format date to readable string
 function formatDate(isoString) {
   const d = new Date(isoString);
-  return d.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+  return `${days[d.getDay()]}, ${d.getDate()}/${d.getMonth() + 1}`;
 }
 
 function formatDateTime(isoString) {
   const d = new Date(isoString);
-  return d.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return d.toLocaleString('vi-VN');
 }
 
 function capitalizeStatus(status) {
   const map = {
-    'todo': 'To Do',
-    'in-progress': 'In Progress',
-    'done': 'Done',
+    'todo': 'Cần làm',
+    'in-progress': 'Đang làm',
+    'done': 'Hoàn thành',
     'backlog': 'Backlog'
   };
   return map[status] || status;
+}
+
+function capitalizePriority(priority) {
+  const map = {
+    'low': 'Thấp',
+    'medium': 'Trung bình',
+    'high': 'Cao'
+  };
+  return map[priority] || priority;
 }
 
 async function loadTasks() {
@@ -49,15 +46,15 @@ async function loadTasks() {
 
     if (error) throw error;
     allTasks = data || [];
-    updateCounts();
+    updateStats();
     renderTasks();
   } catch (err) {
     console.error('Failed to load tasks', err);
-    showToast('Failed to load tasks', 'error');
+    showToast('Không thể tải tasks', 'error');
   }
 }
 
-function updateCounts() {
+function updateStats() {
   const counts = {
     'todo': 0,
     'in-progress': 0,
@@ -70,37 +67,52 @@ function updateCounts() {
     }
   });
 
-  document.getElementById('count-todo').textContent = counts['todo'];
-  document.getElementById('count-in-progress').textContent = counts['in-progress'];
-  document.getElementById('count-done').textContent = counts['done'];
+  document.getElementById('stat-todo').textContent = counts['todo'];
+  document.getElementById('stat-in-progress').textContent = counts['in-progress'];
+  document.getElementById('stat-done').textContent = counts['done'];
+
+  // Show active task (first in-progress)
+  const activeTask = allTasks.find(t => t.status === 'in-progress');
+  if (activeTask) {
+    showActiveTask(activeTask);
+  } else {
+    document.getElementById('active-section').style.display = 'none';
+  }
+}
+
+function showActiveTask(task) {
+  document.getElementById('active-section').style.display = 'block';
+  document.getElementById('active-title').textContent = task.title;
+  document.getElementById('active-meta').textContent = task.description || 'Không có mô tả';
+  document.getElementById('active-deadline').textContent = 'Đang làm';
+  document.getElementById('active-progress').style.width = '50%'; // mock progress
+
+  document.getElementById('btn-complete-active').onclick = () => toggleTaskStatus(task.id);
+  document.getElementById('active-card').onclick = () => showTaskDetail(task.id);
 }
 
 function renderTasks() {
   const container = document.getElementById('task-list');
-  const filtered = allTasks.filter(t => t.status === currentFilter);
 
-  if (filtered.length === 0) {
-    container.innerHTML = '<p class="empty-state">No tasks in this status. Press + to create one.</p>';
+  if (allTasks.length === 0) {
+    container.innerHTML = '<p class="empty-state">Chưa có task. Nhấn nút + để tạo mới.</p>';
     return;
   }
 
-  container.innerHTML = filtered.map(task => `
-    <div class="task-card" data-task-id="${task.id}">
-      <div class="task-header">
-        <div class="task-title">${task.title}</div>
-        <div class="task-priority ${task.priority}">${task.priority.toUpperCase()}</div>
+  container.innerHTML = allTasks.map(task => `
+    <div class="task-item" data-task-id="${task.id}">
+      <div class="task-item-header">
+        <div class="task-item-title">${task.title}</div>
+        <div class="badge-status">${capitalizeStatus(task.status)}</div>
       </div>
-      ${task.description ? `<div class="task-desc">${task.description}</div>` : ''}
-      <div class="task-meta">
-        <span>📊 ${capitalizeStatus(task.task_column)}</span>
-        <span>📅 ${new Date(task.created_at).toLocaleDateString()}</span>
-      </div>
+      ${task.description ? `<div class="task-item-meta">${task.description.substring(0, 60)}${task.description.length > 60 ? '...' : ''}</div>` : ''}
+      <div class="task-item-meta">${capitalizePriority(task.priority)} · ${capitalizeStatus(task.task_column)}</div>
     </div>
   `).join('');
 
   // Attach click handlers
-  container.querySelectorAll('.task-card').forEach(card => {
-    card.addEventListener('click', () => showTaskDetail(card.dataset.taskId));
+  container.querySelectorAll('.task-item').forEach(item => {
+    item.addEventListener('click', () => showTaskDetail(item.dataset.taskId));
   });
 }
 
@@ -109,20 +121,19 @@ function showTaskDetail(taskId) {
   if (!task) return;
 
   document.getElementById('detail-title').textContent = task.title;
-  document.getElementById('detail-priority').innerHTML = `<span class="task-priority ${task.priority}">${task.priority.toUpperCase()}</span>`;
   document.getElementById('detail-status').textContent = capitalizeStatus(task.status);
-  document.getElementById('detail-description').textContent = task.description || 'No description';
+  document.getElementById('detail-priority').textContent = capitalizePriority(task.priority);
+  document.getElementById('detail-description').textContent = task.description || 'Không có mô tả';
   document.getElementById('detail-column').textContent = capitalizeStatus(task.task_column);
   document.getElementById('detail-created').textContent = formatDateTime(task.created_at);
 
   const toggleBtn = document.getElementById('btn-toggle-status');
   if (task.status === 'done') {
-    toggleBtn.textContent = 'Move to To Do';
+    toggleBtn.textContent = 'Chuyển sang Cần làm';
   } else {
-    toggleBtn.textContent = 'Mark as Done';
+    toggleBtn.textContent = 'Hoàn thành';
   }
 
-  // Store current task ID for actions
   document.getElementById('task-detail-modal').dataset.taskId = taskId;
   document.getElementById('task-detail-modal').classList.add('show');
 }
@@ -140,7 +151,7 @@ function openTaskForm(taskId = null) {
     const task = allTasks.find(t => t.id === taskId);
     if (!task) return;
 
-    title.textContent = 'Edit task';
+    title.textContent = 'Sửa task';
     document.getElementById('task-title').value = task.title;
     document.getElementById('task-description').value = task.description || '';
     document.getElementById('task-status').value = task.status;
@@ -148,9 +159,8 @@ function openTaskForm(taskId = null) {
     document.getElementById('task-column').value = task.task_column;
     editingTaskId = taskId;
   } else {
-    title.textContent = 'New task';
+    title.textContent = 'Task mới';
     form.reset();
-    document.getElementById('task-status').value = currentFilter;
     editingTaskId = null;
   }
 
@@ -191,26 +201,26 @@ async function saveTask(e) {
         .eq('id', editingTaskId);
 
       if (error) throw error;
-      showToast('Task updated', 'success');
+      showToast('Task đã cập nhật', 'success');
     } else {
       const { error } = await supabase
         .from('tasks')
         .insert(taskData);
 
       if (error) throw error;
-      showToast('Task created', 'success');
+      showToast('Task đã tạo', 'success');
     }
 
     closeTaskForm();
     await loadTasks();
   } catch (err) {
     console.error('Failed to save task', err);
-    showToast('Failed to save task', 'error');
+    showToast('Không thể lưu task', 'error');
   }
 }
 
 async function deleteTask(taskId) {
-  if (!confirm('Delete this task? This cannot be undone.')) return;
+  if (!confirm('Xóa task này? Không thể hoàn tác.')) return;
 
   try {
     const { error } = await supabase
@@ -220,12 +230,12 @@ async function deleteTask(taskId) {
 
     if (error) throw error;
 
-    showToast('Task deleted', 'info');
+    showToast('Task đã xóa', 'info');
     closeTaskDetail();
     await loadTasks();
   } catch (err) {
     console.error('Failed to delete task', err);
-    showToast('Failed to delete task', 'error');
+    showToast('Không thể xóa task', 'error');
   }
 }
 
@@ -246,12 +256,12 @@ async function toggleTaskStatus(taskId) {
 
     if (error) throw error;
 
-    showToast(newStatus === 'done' ? 'Task completed!' : 'Task moved to To Do', 'success');
+    showToast(newStatus === 'done' ? 'Task hoàn thành!' : 'Task chuyển sang Cần làm', 'success');
     closeTaskDetail();
     await loadTasks();
   } catch (err) {
     console.error('Failed to update task', err);
-    showToast('Failed to update task', 'error');
+    showToast('Không thể cập nhật task', 'error');
   }
 }
 
@@ -260,20 +270,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   supabase = await initSupabase();
 
   // Set current date
-  document.getElementById('current-date').textContent = formatDate(new Date().toISOString());
+  document.getElementById('current-date-small').textContent = formatDate(new Date().toISOString());
 
-  // Status filter buttons
-  document.querySelectorAll('.status-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentFilter = btn.dataset.status;
-      renderTasks();
-    });
-  });
-
-  // Add task button
-  document.getElementById('add-task-btn').addEventListener('click', () => openTaskForm());
+  // Add task FAB
+  document.getElementById('add-task-fab').addEventListener('click', () => openTaskForm());
 
   // Task form
   document.getElementById('task-form').addEventListener('submit', saveTask);
