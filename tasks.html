@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -7,96 +7,62 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <main class="blue-container">
+  <div class="bs-container">
     <!-- Header -->
-    <div class="blue-header">
-      <div class="date-small" id="current-date-small">Loading...</div>
-      <div class="page-title">Hôm nay</div>
+    <div class="bs-header">
+      <button class="bs-btn-back" onclick="window.location.href='index.html'">Back to menu</button>
+      <div class="bs-header-date" id="current-date">Loading...</div>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Cần làm</div>
-        <div class="stat-value" id="stat-todo">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Đang làm</div>
-        <div class="stat-value" id="stat-in-progress">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Xong tuần này</div>
-        <div class="stat-value" id="stat-done">0</div>
-      </div>
-    </div>
-
-    <!-- Active Task Card -->
-    <div class="active-section" id="active-section" style="display: none;">
-      <div class="active-card" id="active-card">
-        <div class="active-header">
-          <div class="active-status">Đang làm</div>
-          <div class="active-deadline" id="active-deadline">Hạn hôm nay</div>
-        </div>
-        <div class="active-title" id="active-title"></div>
-        <div class="active-meta" id="active-meta"></div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="active-progress" style="width: 0%"></div>
-        </div>
-        <button class="btn-complete" id="btn-complete-active">Hoàn thành</button>
-      </div>
-    </div>
+    <!-- Nav Tabs -->
+    <nav class="bs-nav-tabs">
+      <button class="bs-nav-link active" data-status="todo">To do</button>
+      <button class="bs-nav-link" data-status="in-progress">In progress</button>
+      <button class="bs-nav-link" data-status="done">Done</button>
+    </nav>
 
     <!-- Task List -->
-    <div class="section-header">Cần xử lý</div>
-    <div class="task-list" id="task-list">
-      <p class="empty-state">Chưa có task. Nhấn Thêm để tạo mới.</p>
+    <div class="bs-task-list" id="task-list">
+      <p class="text-muted text-center" style="margin-top: 2rem;">No tasks yet. Click Create new task to get started.</p>
     </div>
 
-    <!-- Bottom Nav -->
-    <div class="bottom-nav">
-      <div class="nav-item active">Hôm nay</div>
-      <div class="nav-item" onclick="alert('Chức năng đang phát triển')">Bảng</div>
-      <div class="nav-item" id="nav-add">Thêm</div>
-    </div>
-  </main>
+    <!-- Create Button -->
+    <button class="bs-btn-create" id="btn-create">Create new task</button>
+  </div>
 
   <!-- Task Detail Modal -->
-  <div class="task-detail-overlay" id="task-detail-modal">
-    <div class="task-detail-card">
-      <div class="detail-header">
-        <div class="detail-title" id="detail-title">Task Title</div>
-        <button class="close-detail" id="close-detail">×</button>
+  <div class="bs-modal-backdrop" id="task-detail-modal">
+    <div class="bs-modal-dialog">
+      <div class="bs-modal-header">
+        <h5 class="bs-modal-title" id="detail-title">Task Title</h5>
+        <button class="bs-btn-close" id="close-detail">×</button>
       </div>
-
-      <div class="detail-section">
-        <div class="detail-label">Trạng thái</div>
-        <div class="detail-content" id="detail-status"></div>
+      <div class="bs-modal-body">
+        <div class="bs-detail-section">
+          <div class="bs-detail-label">Status</div>
+          <div class="bs-detail-value" id="detail-status"></div>
+        </div>
+        <div class="bs-detail-section">
+          <div class="bs-detail-label">Priority</div>
+          <div class="bs-detail-value" id="detail-priority"></div>
+        </div>
+        <div class="bs-detail-section">
+          <div class="bs-detail-label">Description</div>
+          <div class="bs-detail-value" id="detail-description">No description</div>
+        </div>
+        <div class="bs-detail-section">
+          <div class="bs-detail-label">Column</div>
+          <div class="bs-detail-value" id="detail-column"></div>
+        </div>
+        <div class="bs-detail-section">
+          <div class="bs-detail-label">Created</div>
+          <div class="bs-detail-value" id="detail-created"></div>
+        </div>
       </div>
-
-      <div class="detail-section">
-        <div class="detail-label">Ưu tiên</div>
-        <div class="detail-content" id="detail-priority"></div>
-      </div>
-
-      <div class="detail-section">
-        <div class="detail-label">Mô tả</div>
-        <div class="detail-content" id="detail-description">Không có mô tả</div>
-      </div>
-
-      <div class="detail-section">
-        <div class="detail-label">Cột</div>
-        <div class="detail-content" id="detail-column"></div>
-      </div>
-
-      <div class="detail-section">
-        <div class="detail-label">Tạo lúc</div>
-        <div class="detail-content" id="detail-created"></div>
-      </div>
-
-      <div class="detail-actions">
-        <button class="btn-action" id="btn-edit-task">Sửa</button>
-        <button class="btn-action" id="btn-delete-task">Xóa</button>
-        <button class="btn-action primary" id="btn-toggle-status">Hoàn thành</button>
+      <div class="bs-modal-footer">
+        <button class="bs-btn bs-btn-secondary" id="btn-edit">Update</button>
+        <button class="bs-btn bs-btn-primary" id="btn-change-status">Change status</button>
+        <button class="bs-btn bs-btn-danger" id="btn-delete">Delete</button>
       </div>
     </div>
   </div>
@@ -104,26 +70,26 @@
   <!-- Task Form Modal -->
   <div class="modal" id="task-form-modal">
     <div class="modal-content">
-      <h2 id="form-title">Task mới</h2>
+      <h2 id="form-title">New task</h2>
       <form id="task-form">
-        <input type="text" id="task-title" placeholder="Tiêu đề task" required autocomplete="off">
-        <textarea id="task-description" placeholder="Mô tả (tùy chọn)" rows="4"></textarea>
+        <input type="text" id="task-title" placeholder="Task title" required autocomplete="off">
+        <textarea id="task-description" placeholder="Description (optional)" rows="4"></textarea>
 
-        <label for="task-status">Trạng thái</label>
+        <label for="task-status">Status</label>
         <select id="task-status" required>
-          <option value="todo">Cần làm</option>
-          <option value="in-progress">Đang làm</option>
-          <option value="done">Hoàn thành</option>
+          <option value="todo">To do</option>
+          <option value="in-progress">In progress</option>
+          <option value="done">Done</option>
         </select>
 
-        <label for="task-priority">Ưu tiên</label>
+        <label for="task-priority">Priority</label>
         <select id="task-priority" required>
-          <option value="low">Thấp</option>
-          <option value="medium" selected>Trung bình</option>
-          <option value="high">Cao</option>
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
         </select>
 
-        <label for="task-column">Cột</label>
+        <label for="task-column">Column</label>
         <select id="task-column" required>
           <option value="backlog">Backlog</option>
           <option value="todo" selected>To Do</option>
@@ -132,8 +98,8 @@
         </select>
 
         <div class="modal-actions">
-          <button type="button" id="cancel-task">Hủy</button>
-          <button type="submit">Lưu task</button>
+          <button type="button" id="cancel-task">Cancel</button>
+          <button type="submit">Save task</button>
         </div>
       </form>
     </div>
