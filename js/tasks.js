@@ -1,4 +1,4 @@
-// js/tasks.js - Task tracking with blue theme
+// js/tasks.js - Task tracking blue theme matching UI
 import { initSupabase, showToast } from './main.js';
 
 let supabase = null;
@@ -33,6 +33,16 @@ function capitalizePriority(priority) {
     'high': 'Cao'
   };
   return map[priority] || priority;
+}
+
+function capitalizeColumn(col) {
+  const map = {
+    'backlog': 'Backlog',
+    'todo': 'To Do',
+    'in-progress': 'In Progress',
+    'done': 'Done'
+  };
+  return map[col] || col;
 }
 
 async function loadTasks() {
@@ -73,42 +83,59 @@ function updateStats() {
 
   // Show active task (first in-progress)
   const activeTask = allTasks.find(t => t.status === 'in-progress');
+  const activeSection = document.getElementById('active-section');
+
   if (activeTask) {
-    showActiveTask(activeTask);
+    activeSection.style.display = 'block';
+    document.getElementById('active-title').textContent = activeTask.title;
+    document.getElementById('active-meta').textContent = activeTask.description || 'Không có mô tả';
+    document.getElementById('active-deadline').textContent = 'Hạn hôm nay';
+
+    // Mock progress: 66% (2/3 done)
+    document.getElementById('active-progress').style.width = '66%';
+
+    document.getElementById('btn-complete-active').onclick = () => toggleTaskStatus(activeTask.id);
+    document.getElementById('active-card').onclick = (e) => {
+      if (e.target.id !== 'btn-complete-active') {
+        showTaskDetail(activeTask.id);
+      }
+    };
   } else {
-    document.getElementById('active-section').style.display = 'none';
+    activeSection.style.display = 'none';
   }
-}
-
-function showActiveTask(task) {
-  document.getElementById('active-section').style.display = 'block';
-  document.getElementById('active-title').textContent = task.title;
-  document.getElementById('active-meta').textContent = task.description || 'Không có mô tả';
-  document.getElementById('active-deadline').textContent = 'Đang làm';
-  document.getElementById('active-progress').style.width = '50%'; // mock progress
-
-  document.getElementById('btn-complete-active').onclick = () => toggleTaskStatus(task.id);
-  document.getElementById('active-card').onclick = () => showTaskDetail(task.id);
 }
 
 function renderTasks() {
   const container = document.getElementById('task-list');
 
   if (allTasks.length === 0) {
-    container.innerHTML = '<p class="empty-state">Chưa có task. Nhấn nút + để tạo mới.</p>';
+    container.innerHTML = '<p class="empty-state">Chưa có task. Nhấn Thêm để tạo mới.</p>';
     return;
   }
 
-  container.innerHTML = allTasks.map(task => `
-    <div class="task-item" data-task-id="${task.id}">
-      <div class="task-item-header">
-        <div class="task-item-title">${task.title}</div>
-        <div class="badge-status">${capitalizeStatus(task.status)}</div>
+  // Mock: check if overdue (for demo, mark "high" priority as overdue)
+  container.innerHTML = allTasks.map((task, idx) => {
+    const isOverdue = task.priority === 'high'; // mock
+    const progressPercent = idx === 0 ? 66 : idx === 1 ? 0 : 0; // mock 2/3, 0/2, 0/4
+    const doneCount = idx === 0 ? 2 : 0;
+    const totalCount = idx === 0 ? 3 : idx === 1 ? 2 : 4;
+
+    return `
+      <div class="task-item" data-task-id="${task.id}">
+        <div class="task-item-header">
+          <div class="task-item-title">${task.title}</div>
+          ${isOverdue ? '<div class="badge-overdue">Quá hạn 2 ngày</div>' : `<div class="badge-status">${capitalizeStatus(task.status)}</div>`}
+        </div>
+        <div class="task-item-meta">${capitalizeColumn(task.task_column)} · ${capitalizePriority(task.priority)}</div>
+        <div class="task-item-progress">
+          <div class="mini-progress">
+            <div class="mini-progress-bar" style="width: ${progressPercent}%"></div>
+          </div>
+          <div class="task-count">${doneCount}/${totalCount}</div>
+        </div>
       </div>
-      ${task.description ? `<div class="task-item-meta">${task.description.substring(0, 60)}${task.description.length > 60 ? '...' : ''}</div>` : ''}
-      <div class="task-item-meta">${capitalizePriority(task.priority)} · ${capitalizeStatus(task.task_column)}</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   // Attach click handlers
   container.querySelectorAll('.task-item').forEach(item => {
@@ -124,7 +151,7 @@ function showTaskDetail(taskId) {
   document.getElementById('detail-status').textContent = capitalizeStatus(task.status);
   document.getElementById('detail-priority').textContent = capitalizePriority(task.priority);
   document.getElementById('detail-description').textContent = task.description || 'Không có mô tả';
-  document.getElementById('detail-column').textContent = capitalizeStatus(task.task_column);
+  document.getElementById('detail-column').textContent = capitalizeColumn(task.task_column);
   document.getElementById('detail-created').textContent = formatDateTime(task.created_at);
 
   const toggleBtn = document.getElementById('btn-toggle-status');
@@ -272,8 +299,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Set current date
   document.getElementById('current-date-small').textContent = formatDate(new Date().toISOString());
 
-  // Add task FAB
-  document.getElementById('add-task-fab').addEventListener('click', () => openTaskForm());
+  // Bottom nav - Add button
+  document.getElementById('nav-add').addEventListener('click', () => openTaskForm());
 
   // Task form
   document.getElementById('task-form').addEventListener('submit', saveTask);

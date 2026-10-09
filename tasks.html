@@ -7,16 +7,13 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- Header with Back Button -->
-  <div class="blue-header">
-    <button class="btn-back" onclick="window.location.href='index.html'">← Quay lại</button>
-    <div class="header-content">
+  <main class="blue-container">
+    <!-- Header -->
+    <div class="blue-header">
       <div class="date-small" id="current-date-small">Loading...</div>
       <div class="page-title">Hôm nay</div>
     </div>
-  </div>
 
-  <main class="blue-container">
     <!-- Stats Grid -->
     <div class="stats-grid">
       <div class="stat-card">
@@ -28,35 +25,39 @@
         <div class="stat-value" id="stat-in-progress">0</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Hoàn thành</div>
+        <div class="stat-label">Xong tuần này</div>
         <div class="stat-value" id="stat-done">0</div>
       </div>
     </div>
 
-    <!-- Active Task Card (shown when there's one in-progress) -->
+    <!-- Active Task Card -->
     <div class="active-section" id="active-section" style="display: none;">
       <div class="active-card" id="active-card">
         <div class="active-header">
           <div class="active-status">Đang làm</div>
-          <div class="active-deadline" id="active-deadline"></div>
+          <div class="active-deadline" id="active-deadline">Hạn hôm nay</div>
         </div>
         <div class="active-title" id="active-title"></div>
         <div class="active-meta" id="active-meta"></div>
         <div class="progress-bar-container">
-          <div class="progress-bar" id="active-progress"></div>
+          <div class="progress-bar" id="active-progress" style="width: 0%"></div>
         </div>
         <button class="btn-complete" id="btn-complete-active">Hoàn thành</button>
       </div>
     </div>
 
     <!-- Task List -->
-    <div class="section-header">Tất cả công việc</div>
+    <div class="section-header">Cần xử lý</div>
     <div class="task-list" id="task-list">
-      <p class="empty-state">Chưa có task. Nhấn nút + để tạo mới.</p>
+      <p class="empty-state">Chưa có task. Nhấn Thêm để tạo mới.</p>
     </div>
 
-    <!-- Add Task FAB -->
-    <button class="blue-fab" id="add-task-fab">+</button>
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+      <div class="nav-item active">Hôm nay</div>
+      <div class="nav-item" onclick="alert('Chức năng đang phát triển')">Bảng</div>
+      <div class="nav-item" id="nav-add">Thêm</div>
+    </div>
   </main>
 
   <!-- Task Detail Modal -->
