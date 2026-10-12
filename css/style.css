@@ -7,68 +7,68 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: #ffffff;
-  --bg-sidebar: #fbfbfa;
-  --hover-bg: #efefef;
-  --active-bg: #e8e8e7;
-  --border: #e9e9e8;
-  --border-strong: #dfdfde;
-  --text: #37352f;
-  --text-muted: #787774;
-  --text-dim: #9b9a97;
+  --bg: #0d0d0d;
+  --bg-sidebar: #111111;
+  --hover-bg: #1a1a1a;
+  --active-bg: #222222;
+  --border: #1f1f1f;
+  --border-strong: #2a2a2a;
+  --text: rgba(255, 255, 255, 0.88);
+  --text-muted: #888888;
+  --text-dim: #555555;
   --primary: #2383e2;
-  --primary-hover: #1d74c9;
-  --card-bg: #ffffff;
-  --card-border: #e9e9e8;
-  --kanban-col-bg: #f7f6f3;
-  --shadow-sm: 0 1px 2px rgba(15, 15, 15, 0.06);
-  --shadow-md: 0 4px 12px rgba(15, 15, 15, 0.08);
-  --shadow-modal: 0 16px 40px rgba(15, 15, 15, 0.2);
+  --primary-hover: #3b93eb;
+  --card-bg: #141414;
+  --card-border: #1f1f1f;
+  --kanban-col-bg: #111111;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-modal: 0 16px 40px rgba(0, 0, 0, 0.8);
   --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #191919;
-    --bg-sidebar: #202020;
-    --hover-bg: #2c2c2c;
-    --active-bg: #373737;
-    --border: #2f2f2f;
-    --border-strong: #3a3a3a;
-    --text: rgba(255, 255, 255, 0.81);
-    --text-muted: #9b9b9b;
-    --text-dim: #6b6b6b;
+    --bg: #0d0d0d;
+    --bg-sidebar: #111111;
+    --hover-bg: #1a1a1a;
+    --active-bg: #222222;
+    --border: #1f1f1f;
+    --border-strong: #2a2a2a;
+    --text: rgba(255, 255, 255, 0.88);
+    --text-muted: #888888;
+    --text-dim: #555555;
     --primary: #2383e2;
     --primary-hover: #3b93eb;
-    --card-bg: #202020;
-    --card-border: #2e2e2e;
-    --kanban-col-bg: #202020;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-modal: 0 16px 40px rgba(0, 0, 0, 0.6);
+    --card-bg: #141414;
+    --card-border: #1f1f1f;
+    --kanban-col-bg: #111111;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+    --shadow-modal: 0 16px 40px rgba(0, 0, 0, 0.8);
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #191919;
-  --bg-sidebar: #202020;
-  --hover-bg: #2c2c2c;
-  --active-bg: #373737;
-  --border: #2f2f2f;
-  --border-strong: #3a3a3a;
-  --text: rgba(255, 255, 255, 0.81);
-  --text-muted: #9b9b9b;
-  --text-dim: #6b6b6b;
+  --bg: #0d0d0d;
+  --bg-sidebar: #111111;
+  --hover-bg: #1a1a1a;
+  --active-bg: #222222;
+  --border: #1f1f1f;
+  --border-strong: #2a2a2a;
+  --text: rgba(255, 255, 255, 0.88);
+  --text-muted: #888888;
+  --text-dim: #555555;
   --primary: #2383e2;
   --primary-hover: #3b93eb;
-  --card-bg: #202020;
-  --card-border: #2e2e2e;
-  --kanban-col-bg: #202020;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-modal: 0 16px 40px rgba(0, 0, 0, 0.6);
+  --card-bg: #141414;
+  --card-border: #1f1f1f;
+  --kanban-col-bg: #111111;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-modal: 0 16px 40px rgba(0, 0, 0, 0.8);
   color-scheme: dark;
 }
 
