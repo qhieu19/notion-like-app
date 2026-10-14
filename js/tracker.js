@@ -141,6 +141,9 @@ async function updateDisplay() {
   const todayTotal = todaySessions.reduce((sum, s) => sum + (s.durationMs || 0), 0);
   timerEl.textContent = formatDuration(todayTotal);
 
+  btnCheckIn.innerHTML = '<span>▶ Check-in</span>';
+  btnCheckOut.innerHTML = '<span>⏹ Check-out</span>';
+
   if (session && !session.checkOutTime) {
     statusEl.classList.add('active');
     statusText.textContent = 'Working now';
@@ -292,14 +295,22 @@ async function handleSaveSession(index, btn) {
   btn.textContent = 'Wait...';
   btn.disabled = true;
 
-  const date = session.date;
-  const checkInTime = new Date(`${date}T${inVal}:00`).toISOString();
-  const checkOutTime = new Date(`${date}T${outVal}:00`).toISOString();
-  const durationMs = Math.max(0, new Date(checkOutTime) - new Date(checkInTime));
+  try {
+    const date = session.date;
+    const checkInTime = new Date(`${date}T${inVal}:00`).toISOString();
+    const checkOutTime = new Date(`${date}T${outVal}:00`).toISOString();
+    const durationMs = Math.max(0, new Date(checkOutTime) - new Date(checkInTime));
 
-  await updateSession(session.id, { checkInTime, checkOutTime, durationMs });
-  showToast('Session updated', 'success');
-  await updateDisplay();
+    await updateSession(session.id, { checkInTime, checkOutTime, durationMs });
+    showToast('Session updated', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to update session', 'error');
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+    await updateDisplay();
+  }
 }
 
 async function handleCheckIn() {
@@ -307,18 +318,24 @@ async function handleCheckIn() {
   btnIn.textContent = 'Wait...';
   btnIn.disabled = true;
 
-  const today = getTodayDateString();
-  const now = new Date().toISOString();
+  try {
+    const today = getTodayDateString();
+    const now = new Date().toISOString();
 
-  const newSession = {
-    date: today,
-    checkInTime: now,
-    checkOutTime: null
-  };
+    const newSession = {
+      date: today,
+      checkInTime: now,
+      checkOutTime: null
+    };
 
-  localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(newSession));
-  showToast('Checked in successfully!', 'success');
-  await updateDisplay();
+    localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(newSession));
+    showToast('Checked in successfully!', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to check in', 'error');
+  } finally {
+    await updateDisplay();
+  }
 }
 
 async function handleCheckOut() {
@@ -329,19 +346,25 @@ async function handleCheckOut() {
   btnOut.textContent = 'Wait...';
   btnOut.disabled = true;
 
-  const checkOutTime = new Date().toISOString();
-  const durationMs = Math.max(0, new Date(checkOutTime) - new Date(session.checkInTime));
+  try {
+    const checkOutTime = new Date().toISOString();
+    const durationMs = Math.max(0, new Date(checkOutTime) - new Date(session.checkInTime));
 
-  await saveSession({
-    date: session.date,
-    checkInTime: session.checkInTime,
-    checkOutTime: checkOutTime,
-    durationMs
-  });
+    await saveSession({
+      date: session.date,
+      checkInTime: session.checkInTime,
+      checkOutTime: checkOutTime,
+      durationMs
+    });
 
-  localStorage.removeItem(STORAGE_KEY_CURRENT);
-  showToast(`Checked out! Worked for ${formatDuration(durationMs)}`, 'info');
-  await updateDisplay();
+    localStorage.removeItem(STORAGE_KEY_CURRENT);
+    showToast(`Checked out! Worked for ${formatDuration(durationMs)}`, 'info');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to check out', 'error');
+  } finally {
+    await updateDisplay();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
