@@ -24,24 +24,3 @@ export function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
-
-// Global smooth cross-page transition
-document.addEventListener('click', (e) => {
-  const link = e.target.closest('a[href]');
-  if (!link || link.target || e.metaKey || e.ctrlKey || e.shiftKey) return;
-  const href = link.getAttribute('href');
-  if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
-  const targetUrl = new URL(link.href, window.location.href);
-  if (targetUrl.origin !== window.location.origin) return;
-
-  if (document.startViewTransition) {
-    e.preventDefault();
-    document.startViewTransition(() => {
-      document.body.style.opacity = '0';
-      document.body.style.transition = 'opacity 0.16s ease';
-    });
-    setTimeout(() => {
-      window.location.href = targetUrl.href;
-    }, 150);
-  }
-});
