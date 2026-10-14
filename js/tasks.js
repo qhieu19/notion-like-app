@@ -131,10 +131,11 @@ function topbar() {
   const addBtn = '<button class="btn primary add-top" data-action="new-task">' + ICON.plus + '<span><span class="lbl-long">Thêm </span>task</span></button>';
 
   if (view.name === 'home') {
-    const d = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' });
+    const raw = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' });
+    const d = raw.charAt(0).toUpperCase() + raw.slice(1);
     return '<header class="topbar">' +
       '<a href="index.html" class="btn" title="Về trang chủ">' + ICON.back + 'Trang chủ</a>' +
-      '<div class="brand"><h1>Việc của tôi</h1><p>' + esc(d) + '</p></div>' +
+      '<div class="topbar-date">' + esc(d) + '</div>' +
       '<div class="spacer"></div>' + addBtn + '</header>';
   }
   const s = STATUS[view.status];
