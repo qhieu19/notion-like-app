@@ -176,11 +176,18 @@ function listScreen() {
   )).join('');
   const rows = list.map((t) => {
     const di = dueInfo(t);
+    const actionBtns = s === 'doing'
+      ? '<div class="quick-group">' +
+          '<button class="quick" style="--qc:var(--blue);" data-action="move" data-id="' + t.id + '" data-to="todo" aria-label="Về To do: ' + esc(t.title) + '">To do</button>' +
+          '<button class="quick" style="--qc:var(--green);" data-action="move" data-id="' + t.id + '" data-to="done" aria-label="Hoàn thành: ' + esc(t.title) + '">Hoàn thành</button>' +
+        '</div>'
+      : '<button class="quick" data-action="move" data-id="' + t.id + '" data-to="' + mv.to + '" aria-label="' + mv.label + ': ' + esc(t.title) + '">' + mv.label + '</button>';
+
     return '<li class="row' + (s === 'done' ? ' is-done' : '') + '" style="--pc:' + PRIORITY[t.priority].color + ';--qc:' + STATUS[mv.to].color + '">' +
       '<button class="row-open" data-action="open-task" data-id="' + t.id + '"><div class="row-main"><div class="row-title">' + esc(t.title) + '</div>' +
       '<div class="row-meta"><span class="chip">Ưu tiên ' + PRIORITY[t.priority].label.toLowerCase() + '</span>' +
       (di ? '<span class="due' + (di.overdue ? ' overdue' : '') + '">' + esc(di.text) + '</span>' : '') + '</div></div>' + ICON.chev + '</button>' +
-      '<button class="quick" data-action="move" data-id="' + t.id + '" data-to="' + mv.to + '" aria-label="' + mv.label + ': ' + esc(t.title) + '">' + mv.label + '</button></li>';
+      actionBtns + '</li>';
   }).join('');
   const empty = '<div class="empty"><p>Chưa có task nào trong ' + meta.label + '.</p><button class="btn primary" data-action="new-task">' + ICON.plus + 'Thêm task</button></div>';
   return '<section class="panel" style="--c:' + meta.color + ';view-transition-name:tile-' + s + '">' +
