@@ -99,7 +99,7 @@ h1, h2, h3, h4, .mono {
 }
 
 /* ── Header / Top Navigation Bar ── */
-header {
+header:not(.banner-header), .topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -111,11 +111,11 @@ header {
   position: sticky;
   top: 0;
   z-index: 100;
-  height: 60px;
+  min-height: 56px;
   gap: 12px;
 }
 
-header h1 {
+header:not(.banner-header) h1, .topbar h1 {
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -132,36 +132,36 @@ header h1 {
   min-width: 0;
 }
 
-.back-link {
+.back-link, .crumb-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  color: var(--strong);
-  background: var(--surface);
-  border: 1.5px solid var(--border);
+  gap: 4px;
+  color: var(--text);
+  background: transparent;
+  border: none;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  min-height: 38px;
-  padding: 0 12px;
-  border-radius: 10px;
-  transition: background 0.12s, border-color 0.12s;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background 0.12s, color 0.12s;
 }
-.back-link:hover {
-  background: var(--surface-2);
-  border-color: var(--muted);
+.back-link:hover, .crumb-link:hover {
+  background: var(--surface);
   color: var(--strong);
 }
 
 /* Action button: Solarized blue */
 #new-note-btn, #new-task-btn {
   background: var(--blue);
-  color: var(--on-accent);
-  border: 1.5px solid var(--blue);
-  border-radius: 10px;
-  padding: 0 16px;
-  min-height: 38px;
+  color: #ffffff;
+  border: 1px solid var(--blue);
+  border-radius: 8px;
+  padding: 0 14px;
+  height: 36px;
+  min-height: 36px;
   font-size: 14px;
   font-weight: 600;
   display: inline-flex;
@@ -199,6 +199,9 @@ main {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: static;
+  height: auto;
+  min-height: 0;
 }
 
 .badge-user {
@@ -387,6 +390,13 @@ main {
   border-radius: 12px;
 }
 
+.loading {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 #notes-list {
   display: flex;
   flex-direction: column;
@@ -396,7 +406,6 @@ main {
 .note-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 5px solid var(--yellow);
   border-radius: 10px;
   padding: 14px 16px;
   display: flex;
@@ -408,7 +417,7 @@ main {
 }
 .note-card:hover {
   background: var(--surface-2);
-  border-color: var(--yellow);
+  border-color: var(--border-strong);
 }
 
 .note-card-content {
@@ -417,8 +426,8 @@ main {
 }
 
 .note-card h3 {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--strong);
   margin-bottom: 4px;
   font-family: var(--font);
@@ -452,8 +461,12 @@ main {
   border: 1px solid transparent;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
-  padding: 4px 8px;
+  font-size: 14px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--muted);
   transition: background 0.12s, color 0.12s;
 }
@@ -616,14 +629,13 @@ main {
 .tracker-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-top: 5px solid var(--green);
   border-radius: 14px;
-  padding: 24px;
+  padding: 26px 20px;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   margin-top: 8px;
 }
 
@@ -634,6 +646,7 @@ main {
   letter-spacing: -0.02em;
   color: var(--strong);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .timer-status {
@@ -673,43 +686,54 @@ main {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  border: 1.5px solid var(--border);
+  border: 1px solid transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: filter 0.12s, opacity 0.12s;
+  transition: filter 0.12s, opacity 0.12s, background 0.12s;
 }
 .btn-checkin {
   background: var(--green);
-  border-color: var(--green);
-  color: var(--on-accent);
+  color: #ffffff;
+}
+.btn-checkin:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
 .btn-checkout {
   background: var(--red);
-  border-color: var(--red);
-  color: var(--on-accent);
+  color: #ffffff;
+}
+.btn-checkout:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
 .btn-track:disabled {
-  opacity: 0.35;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  border-color: var(--border);
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .history-tab {
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border: 1.5px solid var(--border);
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
   background: var(--surface);
   color: var(--strong);
   font-weight: 600;
   font-size: 13.5px;
   cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.history-tab:hover:not(.active) {
+  background: var(--surface-2);
 }
 .history-tab.active {
   background: var(--blue);
   border-color: var(--blue);
-  color: var(--on-accent);
+  color: #ffffff;
 }
 
 .history-container {
@@ -718,34 +742,40 @@ main {
   gap: 8px;
 }
 
-.session-item {
+.history-item, .session-item {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 4px solid var(--cyan);
   border-radius: 10px;
   padding: 12px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  transition: background 0.12s;
+}
+.history-item:hover, .session-item:hover {
+  background: var(--surface-2);
 }
 
-.session-date {
+.history-date, .session-date {
   font-weight: 600;
   color: var(--strong);
   font-size: 14px;
 }
 
-.session-time {
-  font-size: 13px;
+.history-times, .session-time {
+  font-size: 12.5px;
   color: var(--muted);
   font-family: var(--font-mono);
+  margin-top: 2px;
 }
 
-.session-duration {
+.history-duration, .session-duration {
   font-family: var(--font-mono);
   font-weight: 700;
   color: var(--strong);
   font-size: 14px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Toast Notifications ── */

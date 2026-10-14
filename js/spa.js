@@ -13,8 +13,7 @@
         document.title = doc.title;
 
         // Sync page-specific style in head (e.g. tasks.html custom style)
-        const oldDynamic = document.getElementById('spa-dynamic-style');
-        if (oldDynamic) oldDynamic.remove();
+        document.querySelectorAll('head style').forEach(s => s.remove());
         const pageStyle = doc.querySelector('head style');
         if (pageStyle) {
           const s = document.createElement('style');
