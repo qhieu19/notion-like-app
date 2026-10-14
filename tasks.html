@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#fdf6e3">
+<meta name="view-transition" content="same-origin">
 <title>Tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -201,7 +202,14 @@
   }
   #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-  ::view-transition-group(*) { animation-duration: .28s; animation-timing-function: cubic-bezier(.2,.7,.2,1); }
+  @view-transition { navigation: auto; }
+  ::view-transition-group(*) { animation-duration: .24s; animation-timing-function: cubic-bezier(.2,.7,.2,1); }
+
+  @keyframes pageFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  body { animation: pageFadeIn 0.22s cubic-bezier(.2,.7,.2,1); }
 
   @media (max-width: 900px) {
     .home { gap: 10px; }

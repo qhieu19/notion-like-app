@@ -28,6 +28,21 @@
   color-scheme: dark;
 }
 
+@view-transition { navigation: auto; }
+::view-transition-group(*) {
+  animation-duration: 0.24s;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+body {
+  animation: pageFadeIn 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0d0d0d;
