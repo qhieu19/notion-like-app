@@ -1,112 +1,241 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Tasks - Notion</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fdf6e3">
+<title>Việc của tôi - Tasks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --yellow:#b58900; --orange:#cb4b16; --red:#dc322f; --magenta:#d33682;
+    --violet:#6c71c4; --blue:#268bd2; --cyan:#2aa198; --green:#859900;
+    --on-accent:#002b36;
+
+    color-scheme: light;
+    --bg:#fdf6e3; --surface:#eee8d5; --surface-2:#e4ddc6; --border:#d3ccb4;
+    --text:#586e75; --strong:#073642; --muted:#657b83;
+
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    height: 100%; margin: 0;
+    background: var(--bg); color: var(--text);
+    font: 400 16px/1.5 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; touch-action: manipulation; }
+  h1, h2, .mono { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  :focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+
+  #shell { height: 100%; display: flex; flex-direction: column; }
+
+  .topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 24px; background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 5; flex: none;
+  }
+  .brand { min-width: 0; }
+  .brand h1 { margin: 0; font-size: 22px; line-height: 1.2; color: var(--strong); font-weight: 700; }
+  .brand p { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+  .spacer { flex: 1; }
+  .crumbs { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; min-width: 0; flex-wrap: wrap; }
+  .crumbs li { display: flex; align-items: center; }
+  .crumbs .sep { color: var(--muted); margin: 0 2px; display: inline-flex; }
+  .crumb-link {
+    background: none; border: 0; padding: 8px 10px; min-height: 44px; border-radius: 8px;
+    color: var(--text); font-weight: 500;
+  }
+  .crumb-link:hover { background: var(--surface); color: var(--strong); text-decoration: underline; }
+  .crumb-current { padding: 8px 10px; color: var(--strong); font-weight: 600; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 44px; padding: 0 16px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--surface);
+    color: var(--strong); font-weight: 600; white-space: nowrap; text-decoration: none;
+    transition: background .12s, border-color .12s;
+  }
+  .btn:hover { border-color: var(--muted); background: var(--surface-2); }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: var(--on-accent); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.icon { width: 44px; padding: 0; }
+  .btn.danger { border-color: var(--red); color: color-mix(in srgb, var(--red) 70%, var(--strong)); background: transparent; }
+  .btn.danger:hover { background: color-mix(in srgb, var(--red) 12%, transparent); }
+  .btn.danger.armed { background: var(--red); color: var(--on-accent); }
+  .btn svg { flex: none; }
+
+  .screen { flex: 1; min-height: 0; padding: 20px 24px 24px; outline: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .fab { display: none; position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 6; height: 56px; padding: 0 22px; border-radius: 28px; align-items: center; gap: 8px; background: var(--blue); color: var(--on-accent); border: 0; font-weight: 600; box-shadow: 0 6px 18px rgba(7,54,66,.28); }
+
+  .home { height: 100%; display: grid; grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 2fr) auto; gap: 12px; max-width: 760px; margin: 0 auto; }
+  .tile {
+    position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0;
+    background: var(--surface); border: 1px solid var(--border); border-top: 5px solid var(--c);
+    border-radius: 14px; padding: 18px 20px 16px; overflow: hidden;
+    transition: border-color .12s, background .12s;
+  }
+  .tile:hover { border-color: var(--c); }
+  .tile.doing { background: color-mix(in srgb, var(--c) 9%, var(--surface)); border-color: color-mix(in srgb, var(--c) 40%, var(--border)); border-top-color: var(--c); }
+  .tile-head { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--c); flex: none; }
+  .tile h2 { margin: 0; font-size: 18px; color: var(--strong); font-weight: 700; }
+  .tile.doing h2 { font-size: 24px; }
+  .tile .count { margin-left: auto; font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 700; font-size: 36px; line-height: 1; color: var(--strong); }
+  .tile.doing .count { font-size: 56px; }
+  .tile .sub { margin: 4px 0 0 24px; font-size: 14px; color: var(--muted); }
+  .mini { list-style: none; margin: 14px 0 0; padding: 0; flex: 1; min-height: 0; overflow: hidden; position: relative; }
+  .mini li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); min-width: 0; }
+  .tile.doing .mini li { padding: 14px 0; font-size: 17px; }
+  .mini-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--strong); }
+  .mini-due { font-size: 13px; color: var(--muted); flex: none; }
+  .mini-due.overdue { color: color-mix(in srgb, var(--red) 75%, var(--strong)); font-weight: 600; }
+  .pdot { width: 9px; height: 9px; border-radius: 50%; background: var(--pc); flex: none; }
+  .empty-mini { flex: 1; margin: 14px 0 0; color: var(--muted); }
+  .see-all { margin-top: 10px; display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--strong); min-height: 32px; }
+  .tile-hit { position: absolute; inset: 0; background: transparent; border: 0; border-radius: 14px; cursor: pointer; }
+  .tile-hit:focus-visible { outline-offset: -3px; }
+  .tile-head .chev { margin-left: 4px; }
+  .tile.done { padding: 12px 16px; min-height: 64px; justify-content: center; }
+  .cards { list-style: none; margin: 10px 0 0; padding: 0; flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr); gap: 8px; }
+  .card { position: relative; min-width: 0; min-height: 0; max-height: 128px; overflow: hidden; display: flex; align-items: center; padding: 6px 10px; background: var(--bg); border: 1px solid var(--border); border-left: 5px solid var(--pc); border-radius: 10px; }
+  .card.overdue { padding-right: 22px; }
+  .card.overdue::after { content: ''; position: absolute; top: 7px; right: 7px; width: 9px; height: 9px; border-radius: 50%; background: var(--red); }
+  .card-title { color: var(--strong); font-weight: 500; font-size: 14.5px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .tile.doing .card-title { font-size: 15px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (min-width: 901px) { .card-title, .tile.doing .card-title { font-size: 16px; } .cards { gap: 10px; } }
+
+  .panel {
+    max-width: 920px; margin: 0 auto;
+    background: var(--surface); border: 1px solid var(--border); border-top: 5px solid var(--c);
+    border-radius: 14px; padding: 22px;
+  }
+  .panel-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .panel-head h2 { margin: 0; font-size: 26px; color: var(--strong); font-weight: 700; }
+  .panel-head .count { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 700; font-size: 18px; padding: 2px 12px; border-radius: 999px; background: var(--c); color: var(--on-accent); }
+  .panel-head .hint { color: var(--muted); }
+
+  .tabs { display: flex; gap: 8px; margin: 18px 0; }
+  .tab {
+    flex: 1; min-height: 48px; border-radius: 10px; border: 1.5px solid var(--border);
+    background: var(--bg); color: var(--strong); font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 10px;
+  }
+  .tab:hover { border-color: var(--tc); }
+  .tab[aria-current="page"] { background: var(--tc); border-color: var(--tc); color: var(--on-accent); }
+  .tab .n { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 14px; opacity: .85; }
+
+  .rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+  .row-open {
+    display: flex; align-items: center; gap: 12px; text-align: left; width: 100%; min-height: 68px;
+    background: var(--bg); border: 1px solid var(--border); border-left: 6px solid var(--pc);
+    border-radius: 10px; padding: 12px 14px; color: inherit; min-width: 0;
+  }
+  .row-open:hover { border-color: var(--pc); background: color-mix(in srgb, var(--pc) 6%, var(--bg)); }
+  .row-main { flex: 1; min-width: 0; }
+  .row-title { font-weight: 600; color: var(--strong); overflow-wrap: anywhere; }
+  .row.is-done .row-title { text-decoration: line-through; text-decoration-thickness: 1.5px; color: var(--text); }
+  .row-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 4px; font-size: 13px; color: var(--muted); align-items: center; }
+  .chip { border: 1px solid var(--border); border-radius: 999px; padding: 0 9px; font-size: 12px; font-weight: 500; color: var(--text); }
+  .due.overdue { color: color-mix(in srgb, var(--red) 75%, var(--strong)); font-weight: 600; }
+  .chev { color: var(--muted); flex: none; }
+  .quick {
+    min-width: 108px; padding: 0 14px; border-radius: 10px; font-weight: 600; color: var(--strong);
+    background: transparent; border: 2px solid var(--qc);
+  }
+  .quick:hover { background: var(--qc); color: var(--on-accent); }
+
+  .empty { text-align: center; padding: 36px 12px; border: 2px dashed var(--border); border-radius: 12px; }
+  .empty p { margin: 0 0 14px; color: var(--muted); }
+
+  .field { display: block; margin-top: 18px; }
+  .field > span, fieldset legend { display: block; font-weight: 600; color: var(--strong); margin-bottom: 6px; padding: 0; }
+  fieldset { border: 0; padding: 0; margin: 18px 0 0; min-width: 0; }
+  input[type="date"] { display: block; text-align: left; min-width: 0; }
+  input[type="text"], input[type="date"], textarea {
+    width: 100%; min-height: 48px; padding: 11px 14px; background: var(--bg); color: var(--strong);
+    border: 1.5px solid var(--border); border-radius: 8px;
+  }
+  textarea { resize: vertical; min-height: 120px; }
+  input:focus, textarea:focus { border-color: var(--blue); outline: 2px solid color-mix(in srgb, var(--blue) 40%, transparent); outline-offset: 0; }
+  .err { margin: 6px 0 0; color: color-mix(in srgb, var(--red) 75%, var(--strong)); font-weight: 600; font-size: 14px; }
+  .seg { display: flex; gap: 8px; }
+  .seg button {
+    flex: 1; min-height: 48px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg);
+    color: var(--strong); font-weight: 600; padding: 0 8px;
+  }
+  .seg button:hover { border-color: var(--sc); }
+  .seg button[aria-pressed="true"] { background: var(--sc); border-color: var(--sc); color: var(--on-accent); }
+  .badge { font-size: 13px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--yellow); color: var(--on-accent); }
+  .meta { margin: 18px 0 0; font-size: 13px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+  .form-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); align-items: center; }
+  .form-actions .spacer { flex: 1; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px);
+    background: var(--strong); color: var(--bg); padding: 12px 20px; border-radius: 10px; font-weight: 600;
+    opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; z-index: 20; max-width: calc(100% - 32px);
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  ::view-transition-group(*) { animation-duration: .28s; animation-timing-function: cubic-bezier(.2,.7,.2,1); }
+
+  @media (max-width: 900px) {
+    .home { gap: 10px; }
+    .tile.doing .count { font-size: 48px; }
+  }
+  @media (max-width: 640px) {
+    .topbar { padding: 8px 14px; gap: 8px; }
+    .screen { padding: 12px 14px 20px; }
+    .screen.has-fab { padding-bottom: 96px; }
+    .crumbs li:not(:last-child) { display: none; }
+    .screen.is-home { padding: 10px 12px 12px; }
+    .tile { padding: 12px 14px 8px; border-top-width: 4px; }
+    .tile .count { font-size: 26px; }
+    .tile.doing .count { font-size: 38px; }
+    .tile h2 { font-size: 16px; }
+    .tile.doing h2 { font-size: 20px; }
+    .tile .sub { display: none; }
+    .mini { margin-top: 6px; }
+    .mini li, .tile.doing .mini li { padding: 4px 0; font-size: 15px; line-height: 1.3; gap: 8px; }
+    .mini-due { font-size: 12px; }
+    .see-all { margin-top: 2px; min-height: 0; font-size: 13px; }
+    .panel { padding: 16px; }
+    .panel-head h2 { font-size: 22px; }
+    .tab { font-size: 14px; flex-direction: column; gap: 0; min-height: 54px; }
+    .quick { min-width: 96px; }
+    .seg button { font-size: 15px; }
+    .form-actions .btn { flex: 1; }
+    .form-actions .spacer { display: none; }
+    .fab { display: inline-flex; }
+    .add-list { display: none; }
+  }
+  @media (max-width: 370px) {
+    .row { grid-template-columns: 1fr; }
+    .quick { min-height: 46px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  }
+</style>
 </head>
 <body>
-  <div class="bs-container">
-    <!-- Header -->
-    <div class="bs-header">
-      <button class="bs-btn-back" onclick="window.location.href='index.html'">Home</button>
-      <div class="bs-header-date" id="current-date">Loading...</div>
-    </div>
+<div id="shell"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
-    <!-- Nav Tabs -->
-    <nav class="bs-nav-tabs">
-      <button class="bs-nav-link active" data-status="todo">To do</button>
-      <button class="bs-nav-link" data-status="in-progress">In progress</button>
-      <button class="bs-nav-link" data-status="done">Done</button>
-    </nav>
-
-    <!-- Task List -->
-    <div class="bs-task-list" id="task-list">
-      <p class="text-muted text-center" style="margin-top: 2rem;">No tasks yet. Click Create new task to get started.</p>
-    </div>
-
-    <!-- Create Button -->
-    <button class="bs-btn-create" id="btn-create">Create new task</button>
-  </div>
-
-  <!-- Task Detail Modal -->
-  <div class="bs-modal-backdrop" id="task-detail-modal">
-    <div class="bs-modal-dialog">
-      <div style="width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:0.75rem auto 0;"></div>
-      <div class="bs-modal-header">
-        <h5 class="bs-modal-title" id="detail-title">Task Title</h5>
-        <button class="bs-btn-close" id="close-detail">×</button>
-      </div>
-      <div class="bs-modal-body">
-        <div class="bs-detail-section">
-          <div class="bs-detail-label">Status</div>
-          <div class="bs-detail-value" id="detail-status"></div>
-        </div>
-        <div class="bs-detail-section">
-          <div class="bs-detail-label">Priority</div>
-          <div class="bs-detail-value" id="detail-priority"></div>
-        </div>
-        <div class="bs-detail-section">
-          <div class="bs-detail-label">Description</div>
-          <div class="bs-detail-value" id="detail-description">No description</div>
-        </div>
-        <div class="bs-detail-section">
-          <div class="bs-detail-label">Column</div>
-          <div class="bs-detail-value" id="detail-column"></div>
-        </div>
-        <div class="bs-detail-section">
-          <div class="bs-detail-label">Created</div>
-          <div class="bs-detail-value" id="detail-created"></div>
-        </div>
-      </div>
-      <div class="bs-modal-footer">
-        <button class="bs-btn bs-btn-secondary" id="btn-edit">Update</button>
-        <button class="bs-btn bs-btn-primary" id="btn-change-status">Change status</button>
-        <button class="bs-btn bs-btn-danger" id="btn-delete">Delete</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Task Form Modal -->
-  <div class="modal" id="task-form-modal">
-    <div class="modal-content">
-      <h2 id="form-title">New task</h2>
-      <form id="task-form">
-        <input type="text" id="task-title" placeholder="Task title" required autocomplete="off">
-        <textarea id="task-description" placeholder="Description (optional)" rows="4"></textarea>
-
-        <label for="task-status">Status</label>
-        <select id="task-status" required>
-          <option value="todo">To do</option>
-          <option value="in-progress">In progress</option>
-          <option value="done">Done</option>
-        </select>
-
-        <label for="task-priority">Priority</label>
-        <select id="task-priority" required>
-          <option value="low">Low</option>
-          <option value="medium" selected>Medium</option>
-          <option value="high">High</option>
-        </select>
-
-        <label for="task-column">Column</label>
-        <select id="task-column" required>
-          <option value="backlog">Backlog</option>
-          <option value="todo" selected>To Do</option>
-          <option value="in-progress">In Progress</option>
-          <option value="done">Done</option>
-        </select>
-
-        <div class="modal-actions">
-          <button type="button" id="cancel-task">Cancel</button>
-          <button type="submit">Save task</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script type="module" src="js/main.js"></script>
-  <script type="module" src="js/tasks.js"></script>
+<script type="module" src="js/tasks.js"></script>
 </body>
 </html>
