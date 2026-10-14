@@ -133,10 +133,10 @@ function topbar() {
   if (view.name === 'home') {
     const raw = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' });
     const d = raw.charAt(0).toUpperCase() + raw.slice(1);
-    return '<header class="topbar">' +
+    return '<header class="topbar is-home">' +
       '<a href="index.html" class="btn" title="Về trang chủ">' + ICON.back + 'Trang chủ</a>' +
       '<div class="topbar-date">' + esc(d) + '</div>' +
-      '<div class="spacer"></div>' + addBtn + '</header>';
+      addBtn + '</header>';
   }
   const s = STATUS[view.status];
   let crumbs = '<li><button class="crumb-link" data-action="go-home">Tổng quan</button><span class="sep" aria-hidden="true">' + ICON.chev + '</span></li>';
