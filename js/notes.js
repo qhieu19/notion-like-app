@@ -226,7 +226,13 @@ function escapeHtml(text) {
 }
 
 // Initialize on load
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', init, { once: true });
+
+// SPA re-entry: DOMContentLoaded already fired on previous page, DOM is ready now
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
+  document.removeEventListener('DOMContentLoaded', init);
+  init();
+}
 
 // Listen for edit events from the detail modal
 document.addEventListener('editNote', (e) => {

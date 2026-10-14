@@ -423,8 +423,17 @@ function _assertCheck() {
 }
 _assertCheck();
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function bootTasks() {
   render(false);
   supabase = await initSupabase();
   await loadFromDB();
-});
+}
+
+// Normal page load
+document.addEventListener('DOMContentLoaded', bootTasks, { once: true });
+
+// SPA re-entry: DOMContentLoaded already fired on previous page, DOM is ready now
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
+  document.removeEventListener('DOMContentLoaded', bootTasks);
+  bootTasks();
+}

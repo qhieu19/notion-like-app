@@ -367,7 +367,7 @@ async function handleCheckOut() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function bootTracker() {
   supabase = await initSupabase();
 
   const btnIn = document.getElementById('btn-checkin');
@@ -397,4 +397,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   await updateDisplay();
-});
+}
+
+document.addEventListener('DOMContentLoaded', bootTracker, { once: true });
+
+// SPA re-entry: DOMContentLoaded already fired on previous page, DOM is ready now
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
+  document.removeEventListener('DOMContentLoaded', bootTracker);
+  bootTracker();
+}
